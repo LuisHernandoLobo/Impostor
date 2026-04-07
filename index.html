@@ -4,390 +4,253 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lobito Impostor Online</title>
-    <!-- Favicon de Lobo -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%220.9em%22 font-size=%2290%22>🐺</text></svg>">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-    <meta name="theme-color" content="#050505">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --neon-red: #ff003c;
-            --neon-blue: #00f3ff;
-            --neon-green: #39ff14;
-            --neon-purple: #b400ff;
-            --neon-yellow: #ffe600;
-            --bg-dark: #050505;
+        :root { 
+            --accent-red: #ff003c; --accent-blue: #00f3ff; --accent-green: #39ff14; 
+            --accent-purple: #b400ff; --accent-gold: #ffe600; --bg-dark: #020205; 
+            --glass: rgba(0, 0, 0, 0.85); --border: rgba(255, 255, 255, 0.1);
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
+        html, body { overscroll-behavior-y: contain; margin: 0; height: 100%; background: var(--bg-dark); font-family: 'Inter', sans-serif; color: white; overflow: hidden; }
 
-        html, body {
-            overscroll-behavior-y: contain;
-            margin: 0;
-            height: 100%;
-            background: var(--bg-dark);
-            font-family: 'Orbitron', sans-serif;
-            color: white;
-            overflow: hidden;
+        /* MULTILAYER DYNAMIC BACKGROUND */
+        .bg-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        #bgImage { 
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; 
+            background-size: cover; background-position: center; filter: brightness(0.3) blur(3px); 
+            animation: kenBurns 40s infinite alternate ease-in-out; transition: background-image 2s;
+        }
+        @keyframes kenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.15) translate(-2%, -2%); } }
+        .abstract-blob { position: absolute; width: 60vw; height: 60vw; border-radius: 50%; filter: blur(80px); opacity: 0.15; pointer-events: none; animation: blobMove 20s infinite alternate ease-in-out; }
+        .blob-1 { top: -10%; left: -10%; background: var(--accent-red); }
+        .blob-2 { bottom: -10%; right: -10%; background: var(--accent-blue); animation-delay: -10s; }
+        @keyframes blobMove { 0% { transform: translate(0,0); } 100% { transform: translate(20%, 10%); } }
+        #matrixCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.03; pointer-events: none; }
+
+        /* APP STRUCTURE */
+        .app-shell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; }
+        .container { 
+            width: 100%; max-width: 500px; height: 100%; display: flex; flex-direction: column; 
+            padding: 80px 24px 24px 24px; position: relative; overflow-y: auto; scrollbar-width: none;
+        }
+        .container::-webkit-scrollbar { display: none; }
+
+        /* HEADER */
+        #player-identity-banner {
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 500px; height: 60px; background: rgba(0,0,0,0.7); 
+            border-bottom: 1px solid var(--border); display: none; align-items: center; 
+            justify-content: space-between; padding: 0 20px; z-index: 1000; backdrop-filter: blur(15px);
+        }
+        .header-logo { height: 35px; filter: drop-shadow(0 0 8px var(--accent-red)); }
+        .secret-reminder-btn { background: rgba(255,0,60,0.15); color: #fff; border: 1px solid var(--accent-red); padding: 8px 15px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+
+        #secret-overlay {
+            position: fixed; top: 70px; right: 20px; background: rgba(10,10,20,0.98); 
+            border: 1px solid var(--accent-red); padding: 20px; border-radius: 20px; 
+            z-index: 1001; display: none; text-align: center; box-shadow: 0 10px 50px rgba(0,0,0,0.8);
         }
 
-        /* MATRIX RAIN BACKGROUND */
-        #matrixCanvas {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -2;
-            opacity: 0.06;
-            pointer-events: none;
+        /* COMPONENTS */
+        h1 { font-family: 'Orbitron', sans-serif; text-align: center; font-size: 1.4rem; text-shadow: 0 0 20px var(--accent-red); margin-bottom: 25px; letter-spacing: 4px; line-height: 1.2; text-transform: uppercase; }
+        .setup-section { 
+            background: var(--glass); border: 1px solid var(--border); border-radius: 28px; 
+            padding: 22px; margin-bottom: 20px; backdrop-filter: blur(30px); width: 100%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); animation: fadeInUp 0.6s ease-out;
         }
+        .section-title { font-size: 0.65rem; color: var(--accent-blue); margin-bottom: 15px; letter-spacing: 3px; text-transform: uppercase; text-align: center; font-weight: 900; opacity: 0.9; }
 
-        #bgImage {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover;
-            background-position: center;
-            filter: brightness(0.12) blur(10px);
-            z-index: -1;
-            transition: background-image 1.5s ease;
-        }
+        input, button, select { height: 56px; border-radius: 18px; border: none; font-size: 1rem; font-family: 'Inter', sans-serif; transition: all 0.3s; }
+        input, select { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); width: 100%; padding: 0 20px; text-align: center; -webkit-appearance: none; }
+        select option { background: #0a0a15; color: white; }
 
-        .container {
-            width: 100%;
-            max-width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            padding: 60px 16px 16px 16px;
-            position: relative;
-            z-index: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            animation: slideIn 0.5s ease-out;
-        }
+        .btn-main { background: linear-gradient(135deg, #ff003c 0%, #900022 100%); color: white; font-weight: 900; width: 100%; box-shadow: 0 10px 30px rgba(255,0,60,0.4); text-transform: uppercase; letter-spacing: 2px; cursor: pointer; }
+        .btn-secondary { background: rgba(255,255,255,0.03); color: var(--accent-blue); border: 1px solid rgba(0,243,255,0.3); width: 100%; height: 48px; font-size: 0.75rem; text-transform: uppercase; font-weight: 800; cursor: pointer; }
 
-        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .player-tag { background: rgba(0,0,0,0.5); padding: 12px 20px; border-radius: 16px; margin: 6px; display: inline-flex; align-items: center; border: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; }
+        .player-tag.is-me { border-color: var(--accent-green); color: var(--accent-green); background: rgba(57,255,20,0.05); }
+        .score-badge { background: rgba(0,0,0,0.8); color: var(--accent-gold); padding: 3px 10px; border-radius: 10px; font-size: 0.65rem; margin-left: 12px; border: 1px solid rgba(255,230,0,0.2); }
 
-        h1 {
-            text-align: center;
-            font-size: clamp(1.3rem, 4vw, 1.8rem);
-            text-shadow: 0 0 10px var(--neon-red);
-            margin: 0 0 16px 0;
-            letter-spacing: 2px;
-            line-height: 1.3;
-        }
-
-        .setup-section {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(0, 243, 255, 0.15);
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 10px;
-            backdrop-filter: blur(25px);
-            width: 100%;
-        }
-
-        .section-title {
-            font-size: 0.6rem;
-            color: var(--neon-blue);
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-align: center;
-            opacity: 0.7;
-        }
-
-        input, button, select {
-            height: 48px;
-            border-radius: 12px;
-            border: none;
-            font-size: 0.8rem;
-            font-family: 'Orbitron', sans-serif;
-            transition: all 0.2s ease;
-        }
-
-        input, select {
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            width: 100%;
-            padding: 0 14px;
-            text-align: center;
-        }
-
-        .btn-main {
-            background: linear-gradient(45deg, var(--neon-red), #900022);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 0 20px rgba(255, 0, 60, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-
-        .btn-main:disabled { opacity: 0.3; filter: grayscale(1); }
-
-        .btn-secondary {
-            background: rgba(0, 243, 255, 0.05);
-            color: var(--neon-blue);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            width: 100%;
-            height: 40px;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-        }
-
-        .room-badge {
-            display: inline-block;
-            background: var(--neon-blue);
-            color: black;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-top: 10px;
-            letter-spacing: 5px;
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
-
-        .player-tag {
-            background: rgba(255,255,255,0.05);
-            padding: 8px 15px;
-            border-radius: 8px;
-            margin: 5px;
-            display: inline-block;
-            border: 1px solid rgba(0,243,255,0.2);
-            font-size: 0.8rem;
-        }
-
-        .player-tag.is-me { border-color: var(--neon-green); color: var(--neon-green); }
-        .player-tag.is-active { border-color: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow); animation: pulse 1s infinite; }
-
-        /* DEBATE & AUDIO */
-        #debate-order-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .debate-item {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 15px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .debate-item.active { border-color: var(--neon-yellow); background: rgba(255, 230, 0, 0.05); }
-        
-        .voice-btn-container { margin: 20px 0; text-align: center; }
-        .btn-record {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: var(--neon-red); border: 4px solid rgba(255,255,255,0.2);
-            color: white; font-size: 1.5rem; cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: all 0.3s ease;
-        }
-        .btn-record.recording { animation: pulse-red 1s infinite; transform: scale(1.1); background: #ff0000; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 0, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0); } }
-
-        .audio-player { width: 40px; height: 40px; border-radius: 50%; background: var(--neon-blue); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-        .consensus-section {
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 243, 255, 0.05);
-            border-radius: 12px;
-            border: 1px dashed var(--neon-blue);
-        }
-
-        /* CARD 3D */
-        .card-container { perspective: 1500px; width: 280px; aspect-ratio: 2/3; margin: 20px auto; }
-        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.7s; transform-style: preserve-3d; cursor: pointer; }
+        /* CARDS */
+        .card-container { width: 260px; height: 390px; margin: 30px auto; perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
         .card-inner.flipped { transform: rotateY(180deg); }
-        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
-        .card-front { background: #000; border: 3px solid var(--neon-blue); box-shadow: 0 0 20px rgba(0,243,255,0.3); }
-        .card-back { background: #000; border: 3px solid var(--neon-green); transform: rotateY(180deg); }
-        .card-back.impostor-theme { border-color: var(--neon-red); }
-
-        .word-box {
-            background: rgba(0, 243, 255, 0.05);
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 1.4rem;
-            margin: 15px 0;
-            text-transform: uppercase;
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 35px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); }
+        .card-front { background: linear-gradient(145deg, #0f0f1a, #000); border: 3px solid var(--accent-blue); }
+        .card-front::after { content: '?'; font-size: 120px; font-family: 'Orbitron'; color: var(--accent-blue); text-shadow: 0 0 40px var(--accent-blue); }
+        .card-back { 
+            background-color: #000; background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./Ondas doradas de luz resplandeciente.png');
+            background-size: cover; background-position: center; border: 3px solid var(--accent-green); transform: rotateY(180deg); 
         }
+        .card-back.impostor-theme { border-color: var(--accent-red); filter: hue-rotate(310deg) brightness(1.2); }
+        .word-box { background: rgba(0,0,0,0.9); border: 2px solid var(--accent-blue); color: var(--accent-blue); padding: 18px 30px; border-radius: 22px; font-size: 1.5rem; margin: 20px 0; text-transform: uppercase; font-weight: 900; text-shadow: 0 0 20px var(--accent-blue); }
 
-        #voting-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-        .vote-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--neon-blue);
-            color: white;
-            text-align: left;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .vote-btn:active { background: var(--neon-red); }
-        .vote-btn.voted-for { background: var(--neon-red); border-color: var(--neon-red); }
-
-        .status-msg { font-size: 0.7rem; color: #888; text-align: center; margin-top: 20px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
+        .vote-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--border); color: white; text-align: left; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; height: 52px; margin-bottom: 12px; border-radius: 18px; width: 100%; }
+        .vote-btn.voted-for { background: var(--accent-red); border-color: var(--accent-red); box-shadow: 0 0 25px rgba(255,0,60,0.4); }
+        
+        .status-msg { font-size: 0.85rem; color: #fff; text-align: center; margin-top: 20px; background: rgba(0,0,0,0.6); padding: 15px 25px; border-radius: 20px; font-weight: 700; border: 1px solid var(--border); }
         .confetti { position: fixed; width: 8px; height: 8px; pointer-events: none; z-index: 1000; animation: fall linear forwards; }
         @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); } 100% { transform: translateY(110vh) rotate(720deg); } }
+
+        /* Desktop improvements: wider layout, stronger matrix, centered app */
+        @media (min-width: 900px) {
+            .container { max-width: 900px; padding: 120px 40px 40px 40px; }
+            .app-shell { align-items: center; }
+            #player-identity-banner { display: flex; }
+            #matrixCanvas { opacity: 0.18; }
+            .setup-section { padding: 30px; border-radius: 28px; }
+            h1 { font-size: 2rem; letter-spacing: 6px; }
+            .card-container { width: 360px; height: 520px; }
+        }
     </style>
 </head>
 <body>
-<canvas id="matrixCanvas"></canvas>
-<div id="bgImage"></div>
-
-<!-- PANTALLA 1: LOGIN / UNIRSE -->
-<div class="container" id="screen-start">
-    <h1>LOBITO<br><span style="color:var(--neon-red)">IMPOSTOR ONLINE</span></h1>
-    
-    <div class="setup-section">
-        <div class="section-title">Identificación de Agente</div>
-        <input type="text" id="input-nickname" placeholder="TU NOMBRE..." maxlength="12">
-    </div>
-
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <button class="btn-main" style="flex:1;" onclick="app.createRoom()">CREAR SALA</button>
-    </div>
-
-    <div class="setup-section">
-        <div class="section-title">Unirse a Misión Existente</div>
-        <input type="text" id="input-room-code" placeholder="CÓDIGO (4 LETRAS)" maxlength="4" style="text-transform: uppercase;">
-        <button class="btn-secondary" onclick="app.joinRoom()" style="margin-top: 10px;">CONECTAR</button>
-    </div>
-
-    <div style="text-align: center; font-size: 0.5rem; color: #444; margin-top: 20px;">
-        BY LUIS HERNANDO LOBO JÁCOME
-    </div>
+<div class="bg-wrapper">
+    <div id="bgImage"></div>
+    <div class="abstract-blob blob-1"></div>
+    <div class="abstract-blob blob-2"></div>
+    <canvas id="matrixCanvas"></canvas>
 </div>
 
-<!-- PANTALLA 2: LOBBY -->
-<div class="container" id="screen-lobby" style="display:none;">
-    <h1>SALA DE<br><span style="color:var(--neon-blue)">ESPERA</span></h1>
-    
-    <div class="setup-section" style="text-align: center;">
-        <div class="section-title">Código de Acceso</div>
-        <div id="display-room-code" class="room-badge">----</div>
-        <p style="font-size: 0.6rem; margin-top: 10px; color: #888;">Comparte este código con tus amigos</p>
-    </div>
+<div id="player-identity-banner">
+    <img src="./logo-lhlj.png" class="header-logo" alt="Logo">
+    <div id="banner-name">---</div>
+    <button class="secret-reminder-btn" onclick="app.toggleSecret()">Secreto</button>
+</div>
 
-    <div class="setup-section">
-        <div class="section-title">Agentes en Frecuencia (<span id="player-count">0</span>)</div>
-        <div id="lobby-players-list" style="text-align: center; min-height: 50px;"></div>
-    </div>
+<div id="secret-overlay">
+    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1px;">TU ROL</div>
+    <div id="reminder-role" style="font-weight: 900; font-size: 1.2rem; margin-bottom: 8px;">---</div>
+    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1px;">TU PALABRA</div>
+    <div id="reminder-word" style="font-weight: 900; color: var(--accent-blue); font-size: 1.2rem;">---</div>
+</div>
 
-    <!-- Solo visible para el host -->
-    <div id="host-controls" style="display:none;">
+<div class="app-shell">
+    <div class="container" id="screen-start">
+        <img src="./logo-lhlj.png" style="width: 160px; margin: 0 auto 20px auto; display: block;" alt="Logo">
+        <h1>IMPOSTOR<br><span style="color:var(--accent-red)">PROTOCOL</span></h1>
         <div class="setup-section">
-            <div class="section-title">Configuración de Misión</div>
-            <select id="select-category" style="margin-bottom: 10px;"></select>
-            <select id="select-difficulty">
-                <option value="Todo">Dificultad Mixta</option>
-                <option value="Fácil">Novato (Fácil)</option>
-                <option value="Medio">Agente (Medio)</option>
-                <option value="Difícil">Élite (Difícil)</option>
-            </select>
+            <div class="section-title">Identificación</div>
+            <input type="text" id="input-nickname" placeholder="Ingresa tu nombre..." maxlength="30">
         </div>
-        <button class="btn-main" onclick="app.startGame()">INICIAR PROTOCOLO</button>
+        <button class="btn-main" onclick="app.createRoom()">Crear Sala</button>
+        <div class="setup-section">
+            <div class="section-title">Unirse</div>
+            <input type="text" id="input-room-code" placeholder="Código de sala" maxlength="4" style="text-transform: uppercase;">
+            <button class="btn-secondary" onclick="app.joinRoom()" style="margin-top: 15px;">Conectar</button>
+        </div>
+        <div style="text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.3); margin-top: 30px; letter-spacing: 2px;">BY LUIS HERNANDO LOBO JÁCOME</div>
     </div>
 
-    <div id="guest-waiting" style="text-align: center; color: var(--neon-blue); font-size: 0.7rem; display:none;">
-        <div class="status-msg">ESPERANDO QUE EL HOST INICIE...</div>
-    </div>
-</div>
-
-<!-- PANTALLA 3: REVELAR ROL -->
-<div class="container" id="screen-reveal" style="display:none;">
-    <h1 id="reveal-player-name">---</h1>
-    <div class="card-container">
-        <div class="card-inner" id="role-card" onclick="this.classList.toggle('flipped')">
-            <div class="card-front">
-                <div style="font-size: 80px; text-shadow: 0 0 20px var(--neon-blue);">?</div>
-                <p style="font-size: 0.7rem; color: var(--neon-blue); margin-top: 20px;">TOCA PARA REVELAR TU IDENTIDAD</p>
+    <div class="container" id="screen-lobby" style="display:none;">
+        <h1>SALA DE<br><span style="color:var(--accent-blue)">ESPERA</span></h1>
+        <div class="setup-section" style="text-align: center;">
+            <div class="section-title">Código de Misión</div>
+            <div id="display-room-code" class="room-badge">----</div>
+        </div>
+        <div class="setup-section">
+            <div class="section-title">Agentes en frecuencia (<span id="player-count">0</span>)</div>
+            <div id="lobby-players-list" style="text-align: center;"></div>
+        </div>
+        <div id="host-controls" style="display:none;">
+            <div class="setup-section">
+                <div class="section-title">Configuración</div>
+                <select id="select-category" style="margin-bottom: 12px;"></select>
+                <select id="select-difficulty" style="margin-bottom: 12px;">
+                    <option value="Todo">🌐 Todas las dificultades</option>
+                    <option value="Fácil">🟢 Recluta</option>
+                    <option value="Medio">🟡 Agente</option>
+                    <option value="Difícil">🔴 Élite</option>
+                </select>
+                <label style="display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 0.7rem; color: var(--accent-blue); margin: 15px 0; cursor: pointer;">
+                    <input type="checkbox" id="check-impostor-word" checked style="width: 20px; height: 20px;"> ¿Impostor tiene guía?
+                </label>
+                <div style="border-top: 1px solid var(--border); margin-top: 15px; padding-top: 15px; display: flex; gap: 8px;">
+                    <button class="btn-secondary" onclick="app.copyAIPrompt()" style="flex: 1; font-size: 0.6rem;">📋 Prompt</button>
+                    <button class="btn-secondary" onclick="app.loadWordsManual()" style="flex: 1; font-size: 0.6rem; border-color: var(--accent-green); color: var(--accent-green);">📥 Cargar</button>
+                </div>
             </div>
-            <div class="card-back" id="role-card-back">
-                <div id="role-icon" style="font-size: 60px; margin-bottom: 10px;">🕵️</div>
-                <h2 id="role-title" style="margin-bottom: 10px;">---</h2>
-                <div class="word-box" id="role-word">---</div>
-                <p id="role-hint" style="font-size: 0.55rem; color: #888;"></p>
+            <button class="btn-main" onclick="app.startGame()">Iniciar Protocolo</button>
+        </div>
+        <div id="guest-waiting" class="status-msg" style="display:none;">Esperando que el Host inicie...</div>
+        <button class="btn-secondary" onclick="app.exitGame()" style="margin-top: 25px; color: var(--accent-red); border-color: rgba(255,0,60,0.3);">Abandonar Sala</button>
+    </div>
+
+    <div class="container" id="screen-reveal" style="display:none;">
+        <h1>TU<br><span style="color:var(--accent-blue)">IDENTIDAD</span></h1>
+        <div class="card-container">
+            <div class="card-inner" id="role-card" onclick="app.revealRole()">
+                <div class="card-front"></div>
+                <div class="card-back" id="role-card-back">
+                    <div style="font-size: 50px; margin-bottom: 10px;">🕵️</div>
+                    <h2 id="role-title" style="margin-bottom: 10px; font-family: 'Orbitron';">---</h2>
+                    <div class="word-box" id="role-word">---</div>
+                    <p id="role-hint" style="font-size: 0.65rem; color: #aaa; text-align: center;"></p>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="status-msg">TODOS DEBEN REVELAR SU ROL PARA CONTINUAR</div>
-</div>
-
-<!-- PANTALLA 4: DEBATE -->
-<div class="container" id="screen-debate" style="display:none;">
-    <h1>FASE DE<br><span style="color:var(--neon-green)">ANÁLISIS</span></h1>
-    
-    <div class="setup-section">
-        <div class="section-title" id="debate-status-title">Turnos de Palabra</div>
-        <div id="debate-order-list"></div>
-    </div>
-
-    <div id="recording-zone" style="display:none;">
-        <div class="voice-btn-container">
-            <button class="btn-record" id="btn-record" onclick="app.toggleRecording()">🎙️</button>
-            <p id="record-msg" style="font-size: 0.6rem; color: var(--neon-red); margin-top: 10px; font-weight: bold;">TOCA PARA GRABAR</p>
+        <div class="setup-section" style="margin-top: 10px;">
+            <div class="section-title">Agentes Listos</div>
+            <div id="reveal-status-list" style="text-align: center; font-size: 0.75rem;"></div>
         </div>
-    </div>
-
-    <div id="consensus-zone" class="consensus-section">
-        <div class="section-title">¿Proceder a Votación?</div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-main" style="margin:0; flex:1;" onclick="app.setConsensus(true)">VOTAR YA</button>
-            <button class="btn-secondary" style="margin:0; flex:1;" onclick="app.setConsensus(false)">NUEVA RONDA</button>
+        <div id="host-reveal-controls" style="display:none; width: 100%;">
+            <button class="btn-main" onclick="app.startDebateManually()">Iniciar Debate</button>
         </div>
-        <p id="consensus-status" style="font-size: 0.5rem; color: var(--neon-blue); text-align: center; margin-top: 10px;"></p>
+        <div id="guest-reveal-msg" class="status-msg">Esperando autorización...</div>
     </div>
 
-    <div id="waiting-turn-msg" class="status-msg">ESPERANDO TU TURNO...</div>
-    
-    <button id="btn-goto-vote-host" class="btn-main" onclick="app.requestVoting()" style="display:none; margin-top: 20px;">FORZAR VOTACIÓN (HOST)</button>
-</div>
-
-<!-- PANTALLA 5: VOTACIÓN -->
-<div class="container" id="screen-voting" style="display:none;">
-    <h1>PROTOCOLO DE<br><span style="color:var(--neon-red)">VOTACIÓN</span></h1>
-    <div class="setup-section">
-        <div class="section-title">Selecciona al Sospechoso</div>
-        <div id="voting-list"></div>
+    <div class="container" id="screen-debate" style="display:none;">
+        <h1>PROTOCOLO DE<br><span style="color:var(--accent-green)">ANÁLISIS</span></h1>
+        <div class="setup-section">
+            <div class="section-title" id="debate-status-title">Turnos</div>
+            <div id="debate-order-list"></div>
+        </div>
+        <div id="recording-zone" style="display:none;">
+            <div class="setup-section" style="border-color: var(--accent-blue);">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="input-debate-word" placeholder="Tu palabra...">
+                    <button class="btn-main" onclick="app.sendTextWord()" style="height: 56px; margin:0; flex: 0 0 80px;">OK</button>
+                </div>
+            </div>
+        </div>
+        <div id="consensus-zone" class="consensus-section">
+            <div class="section-title">¿Pasar a votación?</div>
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button class="btn-main" style="margin:0; flex:1;" onclick="app.setConsensus(true)">SÍ</button>
+                <button class="btn-secondary" style="margin:0; flex:1;" onclick="app.setConsensus(false)">NO</button>
+            </div>
+            <p id="consensus-status" style="font-size: 0.65rem; text-align: center; margin-top: 10px; color: var(--accent-blue);"></p>
+        </div>
+        <div id="waiting-turn-msg" class="status-msg">Esperando...</div>
     </div>
-    <div id="vote-status" class="status-msg">ESPERANDO VOTOS... (<span id="votes-received">0</span>/<span id="votes-total">0</span>)</div>
-</div>
 
-<!-- PANTALLA 6: RESULTADOS -->
-<div class="container" id="screen-results" style="display:none;">
-    <h1 id="result-status">---</h1>
-    <div id="result-display" class="setup-section" style="text-align: center;">
-        <!-- Se llena dinámicamente -->
+    <div class="container" id="screen-voting" style="display:none;">
+        <h1>PROTOCOLO DE<br><span style="color:var(--accent-red)">VOTACIÓN</span></h1>
+        <div class="setup-section">
+            <div class="section-title">Selecciona al sospechoso</div>
+            <div id="voting-list"></div>
+        </div>
+        <div class="status-msg">Votos recibidos: <span id="votes-received" style="color:var(--accent-red)">0</span> / <span id="votes-total">0</span></div>
     </div>
-    <button class="btn-main" onclick="location.reload()">VOLVER AL MENÚ</button>
+
+    <div class="container" id="screen-results" style="display:none;">
+        <h1 id="result-status">---</h1>
+        <div id="result-display" class="setup-section" style="text-align: center;"></div>
+        <div id="results-host-controls" style="display:none; width: 100%;">
+            <button class="btn-main" onclick="app.resetRoom()">Nueva Partida</button>
+        </div>
+        <div id="results-guest-msg" class="status-msg" style="display:none;">Esperando nueva ronda...</div>
+        <button class="btn-secondary" onclick="app.exitGame()" style="margin-top: 15px;">Salir</button>
+    </div>
 </div>
 
-<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
 <script>
-    // ==========================================
-    // ⚠️ CONFIGURACIÓN FIREBASE (PEGA LA TUYA AQUÍ)
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyDwcgtD_WKhml0vGt1ii9tByNPHwgBzNK4",
       authDomain: "lobito-impostor-e2ab8.firebaseapp.com",
@@ -397,538 +260,264 @@
       messagingSenderId: "948913846005",
       appId: "1:948913846005:web:033b835c10dd2db432f7bc"
     };
-    // ==========================================
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
 
-    // BASE DE DATOS DE PALABRAS (Mantenemos la tuya original)
     const wordDatabase = [
-        {palabra: "Playa", impostor: "Piscina", dificultad: "Fácil", categoria: "Naturaleza"},
-        {palabra: "Perro", impostor: "Lobo", dificultad: "Fácil", categoria: "Animales"},
-        {palabra: "Pizza", impostor: "Calzone", dificultad: "Fácil", categoria: "Comida"},
-        {palabra: "Cine", impostor: "Teatro", dificultad: "Fácil", categoria: "Entretenimiento"},
-        {palabra: "Café", impostor: "Té", dificultad: "Fácil", categoria: "Bebidas"},
-        {palabra: "Astronauta", impostor: "Cosmonauta", dificultad: "Medio", categoria: "Profesiones"},
-        {palabra: "Sushi", impostor: "Ceviche", dificultad: "Medio", categoria: "Comida"},
-        {palabra: "Hacker", impostor: "Espía", dificultad: "Fácil", categoria: "Profesiones"},
-        {palabra: "Bitcoin", impostor: "Ethereum", dificultad: "Difícil", categoria: "Economía"},
-        {palabra: "Batman", impostor: "Zorro", dificultad: "Fácil", categoria: "Entretenimiento"},
-        {palabra: "Tsunami", impostor: "Terremoto", dificultad: "Medio", categoria: "Naturaleza"}
-        // ... puedes añadir todas las que tenías en el CSV original aquí
+        {palabra: "Playa", impostor: "Piscina", categoria: "Naturaleza", dificultad: "Fácil"},
+        {palabra: "Tsunami", impostor: "Terremoto", categoria: "Naturaleza", dificultad: "Medio"},
+        {palabra: "Bitcoin", impostor: "Ethereum", categoria: "Tecnología", dificultad: "Difícil"},
+        {palabra: "Astronauta", impostor: "Cosmonauta", categoria: "Profesiones", dificultad: "Medio"},
+        {palabra: "Pizza", impostor: "Calzone", categoria: "Comida", dificultad: "Fácil"},
+        {palabra: "Taco", impostor: "Burrito", categoria: "Comida", dificultad: "Fácil"},
+        {palabra: "Perro", impostor: "Lobo", categoria: "Animales", dificultad: "Fácil"},
+        {palabra: "Tigre", impostor: "León", categoria: "Animales", dificultad: "Fácil"}
     ];
 
     const app = {
-        roomId: null,
-        playerId: null,
-        nickname: null,
-        isHost: false,
-        players: {},
-        gameState: 'lobby',
-        
-        // Propiedades de Audio y Turnos
-        mediaRecorder: null,
-        audioChunks: [],
-        isRecording: false,
-        activeAudio: null,
+        roomId: null, playerId: null, nickname: null, isHost: false, players: {}, gameData: null, 
+        words: [...wordDatabase], joined: false,
+        backgrounds: ['./fondo1.webp', './fondo2.png', './fondo3.png', './Ondas doradas de luz resplandeciente.png'],
 
-        init() {
-            this.playerId = 'p_' + Math.random().toString(36).substr(2, 9);
-            this.populateCategories();
-            initMatrixRain();
+        init() { 
+            this.playerId = 'p_' + Math.random().toString(36).substr(2, 9); 
+            this.setRandomBackground();
+            this.syncWordsFromFirebase(); 
+            initMatrixRain(); 
+        },
+
+        setRandomBackground() {
+            const bg = this.backgrounds[Math.floor(Math.random() * this.backgrounds.length)];
+            const bgElement = document.getElementById('bgImage');
+            if (bgElement) bgElement.style.backgroundImage = `url('${bg}')`;
+        },
+
+        async syncWordsFromFirebase() {
+            db.ref('words').on('value', s => {
+                const data = s.val();
+                if (data) { this.words = Array.isArray(data) ? data : Object.values(data); }
+                else if (this.isHost) { db.ref('words').set(wordDatabase); }
+                this.populateCategories();
+            });
         },
 
         populateCategories() {
-            const cats = [...new Set(wordDatabase.map(w => w.categoria))];
-            const select = document.getElementById('select-category');
-            select.innerHTML = '<option value="Todo">🌐 Todas las categorías</option>';
-            cats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+            const select = document.getElementById('select-category'); if (!select) return;
+            const cats = [...new Set(this.words.map(w => w.categoria))].filter(c => c);
+            let html = '<option value="Todo">🌐 Todas las categorías</option>';
+            cats.forEach(c => html += `<option value="${c}">${c}</option>`);
+            select.innerHTML = html;
+        },
+
+        copyAIPrompt() {
+            const p = `Genera un listado de 30 pares de palabras para "Impostor" en formato CSV simple (Punto y coma). Palabra Agente ; Palabra Impostor ; Categoría ; Dificultad (Fácil, Medio o Difícil). Sin encabezados.`;
+            navigator.clipboard.writeText(p).then(() => alert("¡Prompt copiado!"));
+        },
+
+        async loadWordsManual() {
+            const txt = prompt("Pega el CSV (Separado por ;):");
+            if (!txt) return;
+            const added = [];
+            txt.trim().split('\n').forEach(line => {
+                const parts = line.split(';').map(p => p.trim());
+                if (parts.length >= 2 && !this.words.some(w => w.palabra.toLowerCase() === parts[0].toLowerCase())) {
+                    added.push({ palabra: parts[0], impostor: parts[1], categoria: parts[2] || "General", dificultad: parts[3] || "Medio" });
+                }
+            });
+            if (added.length > 0) { await db.ref('words').set([...this.words, ...added]); alert(`¡Éxito! Se añadieron ${added.length} palabras.`); }
         },
 
         createRoom() {
-            this.nickname = document.getElementById('input-nickname').value.trim();
-            if (!this.nickname) return alert("Ingresa tu nombre");
-            
-            this.roomId = Math.random().toString(36).substr(2, 4).toUpperCase();
-            this.isHost = true;
-            
-            db.ref('rooms/' + this.roomId).set({
-                status: 'lobby',
-                hostId: this.playerId,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            this.joinRoomProcess();
+            this.nickname = document.getElementById('input-nickname').value.trim(); if (!this.nickname) return alert("Nombre!");
+            this.roomId = Math.random().toString(36).substr(2, 4).toUpperCase(); this.isHost = true;
+            this.showScreen('screen-lobby');
+            db.ref('rooms/' + this.roomId).set({ status: 'lobby', hostId: this.playerId }).then(() => this.joinRoomProcess());
         },
 
         joinRoom() {
             this.nickname = document.getElementById('input-nickname').value.trim();
             this.roomId = document.getElementById('input-room-code').value.trim().toUpperCase();
-            if (!this.nickname || !this.roomId) return alert("Completa los datos");
-
-            db.ref('rooms/' + this.roomId).once('value', snapshot => {
-                if (!snapshot.exists()) return alert("Sala no encontrada");
-                this.joinRoomProcess();
-            });
+            if (!this.nickname || !this.roomId) return alert("Faltan datos");
+            db.ref('rooms/' + this.roomId).once('value', s => { if (!s.exists()) return alert("No existe"); this.showScreen('screen-lobby'); this.joinRoomProcess(); });
         },
 
         joinRoomProcess() {
-            const playerRef = db.ref('rooms/' + this.roomId + '/players/' + this.playerId);
-            playerRef.set({
-                name: this.nickname,
-                online: true,
-                voted: false
-            });
-
-            playerRef.onDisconnect().remove();
-
-            this.listenToRoom();
-            this.showScreen('screen-lobby');
-            document.getElementById('display-room-code').innerText = this.roomId;
-            if (this.isHost) {
-                document.getElementById('host-controls').style.display = 'block';
-            } else {
-                document.getElementById('guest-waiting').style.display = 'block';
-            }
+            const ref = db.ref('rooms/' + this.roomId + '/players/' + this.playerId);
+            ref.once('value', s => { const sc = (s.val() && s.val().score) || 0; ref.set({ name: this.nickname, online: true, score: sc }).then(() => { this.joined = true; this.listenToRoom(); }); });
+            ref.onDisconnect().remove();
+            document.getElementById('player-identity-banner').style.display = 'flex';
+            document.getElementById('banner-name').innerText = `AGENTE: ${this.nickname.toUpperCase()}`;
         },
 
         listenToRoom() {
-            db.ref('rooms/' + this.roomId).on('value', snapshot => {
-                const data = snapshot.val();
-                if (!data) return;
-
-                this.players = data.players || {};
-                this.gameState = data.status;
-                
+            db.ref('rooms/' + this.roomId).on('value', s => { playSound('click');
+                const data = s.val(); if (!data) return;
+                const playersInRoom = data.players || {};
+                if (this.joined && !playersInRoom[this.playerId]) { location.reload(); return; }
+                this.players = playersInRoom; this.gameState = data.status; this.gameData = data.gameData;
+                if (this.gameData) {
+                    const isI = this.playerId === this.gameData.impostorId;
+                    document.getElementById('reminder-role').innerText = isI ? "IMPOSTOR" : "AGENTE";
+                    document.getElementById('reminder-word').innerText = isI ? this.gameData.impostorWord : this.gameData.word;
+                }
                 this.updateLobby();
-
+                if (this.gameState === 'lobby') { this.showScreen('screen-lobby'); document.getElementById('role-card').classList.remove('flipped'); }
                 if (this.gameState === 'playing') this.startReveal(data.gameData);
                 if (this.gameState === 'debate') this.handleDebate(data.gameData);
                 if (this.gameState === 'voting') this.startVoting(data.gameData);
                 if (this.gameState === 'results') this.showResults(data.results, data.gameData);
+                document.getElementById('display-room-code').innerText = this.roomId;
+                document.getElementById('host-controls').style.display = this.isHost ? 'block' : 'none';
+                document.getElementById('guest-waiting').style.display = !this.isHost ? 'block' : 'none';
             });
         },
 
         updateLobby() {
-            const list = document.getElementById('lobby-players-list');
-            list.innerHTML = '';
-            let count = 0;
-            for (let id in this.players) {
-                const p = this.players[id];
-                const span = document.createElement('span');
-                span.className = 'player-tag' + (id === this.playerId ? ' is-me' : '');
-                span.innerText = p.name;
-                list.appendChild(span);
-                count++;
-            }
-            document.getElementById('player-count').innerText = count;
+            const list = document.getElementById('lobby-players-list'); list.innerHTML = '';
+            const ids = Object.keys(this.players).sort((a,b) => (this.players[b].score || 0) - (this.players[a].score || 0));
+            ids.forEach(id => {
+                const p = this.players[id]; const div = document.createElement('div'); div.className = 'player-tag' + (id === this.playerId ? ' is-me' : '');
+                let k = (this.isHost && id !== this.playerId) ? `<span onclick="app.kickPlayer('${id}')" style="margin-left:10px; color:var(--accent-red); cursor:pointer;">×</span>` : '';
+                div.innerHTML = `${p.name} <span class="score-badge">${p.score || 0} pts</span>${k}`; list.appendChild(div);
+            });
+            document.getElementById('player-count').innerText = ids.length;
         },
 
+        kickPlayer(id) { if (confirm(`Expulsar?`)) db.ref('rooms/' + this.roomId + '/players/' + id).remove(); },
+        startDebateManually() { db.ref('rooms/' + this.roomId).update({ status: 'debate' }); },
         startGame() {
             if (Object.keys(this.players).length < 3) return alert("Mínimo 3 agentes");
-            
-            const cat = document.getElementById('select-category').value;
-            const diff = document.getElementById('select-difficulty').value;
-            
-            let pool = wordDatabase.filter(w => (cat === 'Todo' || w.categoria === cat) && (diff === 'Todo' || w.dificultad === diff));
-            if (pool.length === 0) pool = wordDatabase;
-            
-            const pair = pool[Math.floor(Math.random() * pool.length)];
-            const playerIds = Object.keys(this.players);
-            const impostorId = playerIds[Math.floor(Math.random() * playerIds.length)];
-
-            // Crear orden de turnos aleatorio
-            const turnOrder = [...playerIds].sort(() => Math.random() - 0.5);
-
-            db.ref('rooms/' + this.roomId).update({
-                status: 'playing',
-                gameData: {
-                    word: pair.palabra,
-                    impostorWord: pair.impostor,
-                    impostorId: impostorId,
-                    category: pair.categoria,
-                    turnOrder: turnOrder,
-                    activeTurnIndex: 0,
-                    roundNum: 1,
-                    startTime: firebase.database.ServerValue.TIMESTAMP
-                }
-            });
+            const cat = document.getElementById('select-category').value, diff = document.getElementById('select-difficulty').value, impHasWord = document.getElementById('check-impostor-word').checked;
+            let pool = this.words.filter(w => (cat === 'Todo' || w.categoria === cat) && (diff === 'Todo' || w.dificultad === diff));
+            if (pool.length === 0) pool = this.words;
+            const pair = pool[Math.floor(Math.random() * pool.length)], ids = Object.keys(this.players), impId = ids[Math.floor(Math.random() * ids.length)];
+            const updates = { status: 'playing', gameData: { word: pair.palabra, impostorWord: impHasWord ? pair.impostor : "??? (SIN PALABRA)", impostorId: impId, category: pair.categoria, turnOrder: ids.sort(()=>Math.random()-0.5), activeTurnIndex: 0 }, results: null };
+            ids.forEach(id => { updates[`players/${id}/vote`] = null; updates[`players/${id}/readyToVote`] = null; updates[`players/${id}/revealed`] = null; });
+            db.ref('rooms/' + this.roomId).update(updates);
         },
 
-        startReveal(gameData) {
+        startReveal(gd) {
             this.showScreen('screen-reveal');
-            document.getElementById('reveal-player-name').innerText = this.nickname;
-            
-            const isImpostor = this.playerId === gameData.impostorId;
-            const cardBack = document.getElementById('role-card-back');
-            const title = document.getElementById('role-title');
-            const word = document.getElementById('role-word');
-            const hint = document.getElementById('role-hint');
-
-            if (isImpostor) {
-                cardBack.className = 'card-back impostor-theme';
-                title.innerText = "IMPOSTOR";
-                title.style.color = "var(--neon-red)";
-                word.innerText = gameData.impostorWord;
-                word.style.borderColor = "var(--neon-red)";
-                word.style.color = "var(--neon-red)";
-                hint.innerText = "Mimetízate con los agentes. No dejes que te descubran.";
-                playSound('impostor');
-            } else {
-                cardBack.className = 'card-back';
-                title.innerText = "AGENTE";
-                title.style.color = "var(--neon-green)";
-                word.innerText = gameData.word;
-                word.style.borderColor = "var(--neon-blue)";
-                word.style.color = "var(--neon-blue)";
-                hint.innerText = `ÁREA: ${gameData.category}. Encuentra al impostor.`;
-                playSound('reveal');
-            }
-
-            // Auto-transición a debate tras 10 seg o control de host
-            if (this.isHost) {
-                setTimeout(() => {
-                    db.ref('rooms/' + this.roomId).update({ status: 'debate' });
-                }, 10000);
-            }
+            const isI = this.playerId === gd.impostorId, card = document.getElementById('role-card-back'); card.className = 'card-back' + (isI ? ' impostor-theme' : '');
+            document.getElementById('role-title').innerText = isI ? "IMPOSTOR" : "AGENTE"; document.getElementById('role-word').innerText = isI ? gd.impostorWord : gd.word; document.getElementById('role-hint').innerText = isI ? "No te dejes descubrir." : `ÁREA: ${gd.category}`;
+            const list = document.getElementById('reveal-status-list'); list.innerHTML = '';
+            for (let id in this.players) { const p = this.players[id]; const s = document.createElement('span'); s.style.margin = '0 5px'; s.style.color = p.revealed ? 'var(--accent-green)' : '#555'; s.innerText = (p.revealed ? '✅' : '⏳') + p.name; list.appendChild(s); }
+            document.getElementById('host-reveal-controls').style.display = this.isHost ? 'block' : 'none';
+            document.getElementById('guest-reveal-msg').style.display = !this.isHost ? 'block' : 'none';
         },
 
-        handleDebate(gameData) {
-            this.showScreen('screen-debate');
-            const turnOrder = gameData.turnOrder || [];
-            const activeIdx = gameData.activeTurnIndex || 0;
-            const activePlayerId = turnOrder[activeIdx];
-            const isMyTurn = activePlayerId === this.playerId;
+        revealRole() { if (!document.getElementById('role-card').classList.contains('flipped')) { document.getElementById('role-card').classList.add('flipped'); db.ref('rooms/' + this.roomId + '/players/' + this.playerId).update({ revealed: true }); playSound(this.playerId === this.gameData?.impostorId ? 'impostor' : 'reveal'); } },
 
-            // Actualizar lista de turnos
-            const list = document.getElementById('debate-order-list');
-            list.innerHTML = '';
-            
+        handleDebate(gd) {
+            this.showScreen('screen-debate');
+            const turnOrder = gd.turnOrder || [], activeIdx = gd.activeTurnIndex || 0, activeId = turnOrder[activeIdx], isMy = activeId === this.playerId;
+            const list = document.getElementById('debate-order-list'); list.innerHTML = '';
             turnOrder.forEach((id, idx) => {
-                const p = this.players[id];
-                if (!p) return;
-                
-                const div = document.createElement('div');
-                div.className = 'debate-item' + (idx === activeIdx ? ' active' : '');
-                
-                const audioUrl = gameData.voiceMessages ? gameData.voiceMessages[id] : null;
-                const audioIcon = audioUrl ? `<div class="audio-player" onclick="app.playVoiceMessage('${audioUrl}')">▶️</div>` : '<span style="font-size:0.5rem; color:#444">ESPERANDO...</span>';
-                
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:8px; height:8px; border-radius:50%; background:${idx === activeIdx ? 'var(--neon-yellow)' : (audioUrl ? 'var(--neon-green)' : '#222')}"></div>
-                        <span style="font-size:0.8rem; ${idx === activeIdx ? 'color:var(--neon-yellow)' : ''}">${p.name} ${id === this.playerId ? '(TÚ)' : ''}</span>
-                    </div>
-                    ${audioIcon}
-                `;
+                const p = this.players[id]; if (!p) return;
+                const div = document.createElement('div'); div.className = 'debate-item' + (idx === activeIdx ? ' active' : '');
+                const word = gd.textWords ? gd.textWords[id] : null;
+                div.innerHTML = `<div style="display:flex; align-items:center; gap:10px;"><div style="width:8px; height:8px; border-radius:50%; background:${idx === activeIdx ? 'var(--accent-gold)' : (word ? 'var(--accent-green)' : '#222')}"></div><span style="font-size:0.75rem">${p.name}</span></div>${word ? `<div style="font-size:0.6rem; color:var(--neon-purple)">💬 ${word}</div>` : ''}`;
                 list.appendChild(div);
             });
-
-            // Control de visibilidad de zona de grabación
-            const recordingZone = document.getElementById('recording-zone');
-            const waitingMsg = document.getElementById('waiting-turn-msg');
-            const consensusZone = document.getElementById('consensus-zone');
-
-            if (activeIdx < turnOrder.length) {
-                // Estamos en ronda de palabras
-                consensusZone.style.display = 'none';
-                if (isMyTurn) {
-                    recordingZone.style.display = 'block';
-                    waitingMsg.style.display = 'none';
-                    document.getElementById('debate-status-title').innerText = "ES TU TURNO DE HABLAR";
-                } else {
-                    recordingZone.style.display = 'none';
-                    waitingMsg.style.display = 'block';
-                    waitingMsg.innerText = `ESPERANDO A ${this.players[activePlayerId]?.name || 'AGENTE'}...`;
-                    document.getElementById('debate-status-title').innerText = "RONDA DE PALABRAS";
-                }
-            } else {
-                // Ronda terminada, fase de consenso
-                recordingZone.style.display = 'none';
-                waitingMsg.style.display = 'none';
-                consensusZone.style.display = 'flex';
-                document.getElementById('debate-status-title').innerText = "CONSENSO GRUPAL";
-                this.updateConsensusUI();
-            }
-
-            if (this.isHost) {
-                document.getElementById('btn-goto-vote-host').style.display = 'block';
-            }
+            const rZ = document.getElementById('recording-zone'), wM = document.getElementById('waiting-turn-msg'), cZ = document.getElementById('consensus-zone');
+            if (activeIdx < turnOrder.length) { cZ.style.display = 'none'; rZ.style.display = isMy ? 'block' : 'none'; wM.style.display = isMy ? 'none' : 'block'; wM.innerText = `HABLA ${this.players[activeId]?.name}...`; document.getElementById('debate-status-title').innerText = isMy ? "TU TURNO" : "DEBATE"; }
+            else { rZ.style.display = 'none'; wM.style.display = 'none'; cZ.style.display = 'flex'; this.updateConsensusUI(); }
         },
 
-        async toggleRecording() {
-            if (!this.isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.mediaRecorder = new MediaRecorder(stream);
-                    this.audioChunks = [];
-
-                    this.mediaRecorder.ondataavailable = e => this.audioChunks.push(e.data);
-                    this.mediaRecorder.onstop = () => this.processAudio();
-
-                    this.mediaRecorder.start();
-                    this.isRecording = true;
-                    document.getElementById('btn-record').classList.add('recording');
-                    document.getElementById('record-msg').innerText = "DETENER (MÁX 15S)";
-                    
-                    // Auto-stop a los 15 segundos
-                    setTimeout(() => { if(this.isRecording) this.toggleRecording(); }, 15000);
-                } catch (err) {
-                    alert("Error al acceder al micrófono: " + err);
-                }
-            } else {
-                this.mediaRecorder.stop();
-                this.isRecording = false;
-                document.getElementById('btn-record').classList.remove('recording');
-                document.getElementById('record-msg').innerText = "SUBIENDO...";
-                this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
-            }
-        },
-
-        async processAudio() {
-            const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-            const path = `rooms/${this.roomId}/audios/${this.playerId}_round.webm`;
-            const ref = storage.ref().child(path);
-            
-            // Deshabilitar botón durante la subida
-            const btn = document.getElementById('btn-record');
-            if (btn) {
-                btn.disabled = true;
-                btn.style.opacity = "0.5";
-            }
-
-            try {
-                const snapshot = await ref.put(audioBlob);
-                const url = await snapshot.ref.getDownloadURL();
-                
-                // Guardar URL en DB y pasar turno
-                const roomRef = db.ref('rooms/' + this.roomId);
-                await roomRef.child('gameData/voiceMessages/' + this.playerId).set(url);
-                
-                const snap = await roomRef.child('gameData/activeTurnIndex').once('value');
-                await roomRef.child('gameData/activeTurnIndex').set(snap.val() + 1);
-                
-                document.getElementById('record-msg').innerText = "¡ENVIADO!";
-                playSound('click');
-            } catch (err) {
-                console.error(err);
-                alert("Error al subir audio");
-                document.getElementById('record-msg').innerText = "ERROR - REINTENTA";
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                }
-            }
-        },
-
-        playVoiceMessage(url) {
-            if (this.activeAudio) this.activeAudio.pause();
-            this.activeAudio = new Audio(url);
-            this.activeAudio.play();
-        },
-
-        setConsensus(ready) {
-            db.ref('rooms/' + this.roomId + '/players/' + this.playerId).update({ readyToVote: ready });
-            playSound('click');
-        },
-
+        async sendTextWord() { const input = document.getElementById('input-debate-word'), word = input.value.trim(); if (!word) return; const ref = db.ref('rooms/' + this.roomId); await ref.child('gameData/textWords/' + this.playerId).set(word); const snap = await ref.child('gameData/activeTurnIndex').once('value'); await ref.child('gameData/activeTurnIndex').set(snap.val() + 1); input.value = ''; playSound('click'); },
+        setConsensus(v) { db.ref('rooms/' + this.roomId + '/players/' + this.playerId).update({ readyToVote: v }); playSound('click'); },
         updateConsensusUI() {
-            const total = Object.keys(this.players).length;
-            let readyCount = 0;
-            let retryCount = 0;
-            
-            for (let id in this.players) {
-                if (this.players[id].readyToVote === true) readyCount++;
-                if (this.players[id].readyToVote === false) retryCount++;
-            }
-
-            document.getElementById('consensus-status').innerText = `VOTOS: ${readyCount} PARA VOTAR, ${retryCount} OTRA RONDA (DE ${total})`;
-
-            if (this.isHost) {
-                if (readyCount === total) {
-                    this.requestVoting();
-                } else if (retryCount > 0 && (readyCount + retryCount) === total) {
-                    // Si alguien quiere otra ronda y todos han decidido, reiniciamos turnos
-                    this.resetTurns();
-                }
-            }
+            let ry = 0, rt = 0, players = Object.values(this.players);
+            players.forEach(p => { if (p.readyToVote === true) ry++; if (p.readyToVote === false) rt++; });
+            document.getElementById('consensus-status').innerText = `${ry} SÍ / ${rt} NO`;
+            if (this.isHost && ry > players.length / 2) db.ref('rooms/' + this.roomId).update({ status: 'voting' });
+            else if (this.isHost && rt >= players.length / 2) setTimeout(() => this.resetTurns(), 1000);
         },
-
-        resetTurns() {
-            db.ref('rooms/' + this.roomId + '/gameData').update({
-                activeTurnIndex: 0,
-                voiceMessages: null // Opcional: limpiar mensajes previos
-            });
-            // Resetear estados de los jugadores
-            for (let id in this.players) {
-                db.ref('rooms/' + this.roomId + '/players/' + id).update({ readyToVote: null });
-            }
-        },
-
-        requestVoting() {
-            db.ref('rooms/' + this.roomId).update({ status: 'voting' });
-        },
-
-        startVoting(gameData) {
+        resetTurns() { db.ref('rooms/' + this.roomId + '/gameData').update({ activeTurnIndex: 0, textWords: null }); for (let id in this.players) db.ref('rooms/' + this.roomId + '/players/' + id).update({ readyToVote: null }); },
+        
+        startVoting(gd) {
             this.showScreen('screen-voting');
-            const list = document.getElementById('voting-list');
-            list.innerHTML = '';
-            
-            let totalPlayers = Object.keys(this.players).length;
-            let votesCount = 0;
-            for(let id in this.players) if(this.players[id].vote) votesCount++;
-            
-            document.getElementById('votes-received').innerText = votesCount;
-            document.getElementById('votes-total').innerText = totalPlayers;
-
-            for (let id in this.players) {
-                if (id === this.playerId) continue;
-                const btn = document.createElement('button');
-                btn.className = 'vote-btn btn-secondary';
-                if (this.players[this.playerId].vote === id) btn.classList.add('voted-for');
-                btn.innerHTML = `${this.players[id].name} <span>SELECCIONAR</span>`;
-                btn.onclick = () => this.castVote(id);
-                list.appendChild(btn);
-            }
-
-            // El host procesa resultados cuando todos votan
-            if (this.isHost && votesCount === totalPlayers) {
-                this.processResults(gameData);
-            }
+            const isImp = this.playerId === gd.impostorId;
+            const list = document.getElementById('voting-list'); list.innerHTML = '';
+            let agents = Object.keys(this.players).filter(id => id !== gd.impostorId);
+            let votesCount = 0; agents.forEach(id => { if(this.players[id].vote) votesCount++; });
+            document.getElementById('votes-received').innerText = votesCount; document.getElementById('votes-total').innerText = agents.length;
+            if (isImp) { list.innerHTML = '<div class="status-msg" style="color:var(--accent-red)">ERES EL IMPOSTOR. ESPERA...</div>'; }
+            else { for (let id in this.players) { if (id === this.playerId) continue; const btn = document.createElement('button'); btn.className = 'vote-btn' + (this.players[this.playerId].vote === id ? ' voted-for' : ''); btn.innerHTML = `${this.players[id].name} <span>VOTAR</span>`; btn.onclick = () => { db.ref('rooms/' + this.roomId + '/players/' + this.playerId).update({ vote: id }); playSound('click'); }; list.appendChild(btn); } }
+            if (this.isHost && votesCount === agents.length) this.processResults(gd);
         },
 
-        castVote(targetId) {
-            db.ref('rooms/' + this.roomId + '/players/' + this.playerId).update({ vote: targetId });
-            playSound('click');
+        processResults(gd) {
+            const t = {}; for (let id in this.players) { if(id === gd.impostorId) continue; const v = this.players[id].vote; if(v) t[v] = (t[v] || 0) + 1; }
+            let max = 0, vid = null, tie = false;
+            for (let id in t) { if (t[id] > max) { max = t[id]; vid = id; tie = false; } else if (t[id] === max) tie = true; }
+            const win = !tie && vid === gd.impostorId, updates = { status: 'results', results: { win, impName: this.players[gd.impostorId].name } };
+            for (let id in this.players) { let s = this.players[id].score || 0; if (id === gd.impostorId) { if (!win) s += 20; } else { if (this.players[id].vote === gd.impostorId) s += 10; } updates[`players/${id}/score`] = s; }
+            db.ref('rooms/' + this.roomId).update(updates);
         },
 
-        processResults(gameData) {
-            const tallies = {};
-            for (let id in this.players) {
-                const target = this.players[id].vote;
-                tallies[target] = (tallies[target] || 0) + 1;
-            }
-
-            let maxVotes = 0;
-            let votedOutId = null;
-            let tie = false;
-
-            for (let id in tallies) {
-                if (tallies[id] > maxVotes) {
-                    maxVotes = tallies[id];
-                    votedOutId = id;
-                    tie = false;
-                } else if (tallies[id] === maxVotes) {
-                    tie = true;
-                }
-            }
-
-            const win = !tie && votedOutId === gameData.impostorId;
-
-            db.ref('rooms/' + this.roomId).update({
-                status: 'results',
-                results: {
-                    win: win,
-                    votedOutName: this.players[votedOutId]?.name || "NADIE",
-                    tie: tie,
-                    impostorName: this.players[gameData.impostorId].name
-                }
-            });
-        },
-
-        showResults(res, gameData) {
+        showResults(res, gd) {
             this.showScreen('screen-results');
-            const status = document.getElementById('result-status');
-            const display = document.getElementById('result-display');
-            
-            if (res.win) {
-                status.innerText = "MISIÓN CUMPLIDA";
-                status.style.color = "var(--neon-green)";
-                launchConfetti();
-                playSound('success');
-            } else {
-                status.innerText = "MISIÓN FALLIDA";
-                status.style.color = "var(--neon-red)";
-                playSound('fail');
-            }
-
-            display.innerHTML = `
-                <div style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">EL IMPOSTOR ERA:</div>
-                <div style="font-size: 1.8rem; color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); margin-bottom: 20px;">${res.impostorName}</div>
-                
-                <div style="display: flex; justify-content: space-around; border-top: 1px solid #222; padding-top: 15px;">
-                    <div>
-                        <div style="font-size: 0.5rem; color: #555;">PALABRA AGENTE</div>
-                        <div style="color: var(--neon-blue);">${gameData.word}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.5rem; color: #555;">PALABRA IMPOSTOR</div>
-                        <div style="color: var(--neon-red);">${gameData.impostorWord}</div>
-                    </div>
-                </div>
-            `;
+            const st = document.getElementById('result-status'); st.innerText = res.win ? "MISIÓN CUMPLIDA" : "MISIÓN FALLIDA"; st.style.color = res.win ? "var(--neon-green)" : "var(--neon-red)";
+            document.getElementById('result-display').innerHTML = `<img src="./logo-lhlj.png" class="result-logo"><div style="font-size: 0.6rem; color: #888;">EL IMPOSTOR ERA:</div><div style="font-size: 1.5rem; color: var(--neon-red); margin: 10px 0;">${res.impName}</div><div style="display: flex; justify-content: space-around; border-top: 1px solid #222; padding-top: 15px;"><div><div style="font-size: 0.4rem; color: #555;">AGENTE</div><div style="color: var(--neon-blue); font-size:0.7rem;">${gd.word}</div></div><div><div style="font-size: 0.4rem; color: #555;">IMPOSTOR</div><div style="color: var(--neon-red); font-size:0.7rem;">${gd.impostorWord}</div></div></div>`;
+            if(res.win) launchConfetti(); playSound(res.win ? 'success' : 'fail');
+            document.getElementById('results-host-controls').style.display = this.isHost ? 'block' : 'none';
+            document.getElementById('results-guest-msg').style.display = !this.isHost ? 'block' : 'none';
         },
 
+        resetRoom() { db.ref('rooms/' + this.roomId).update({ status: 'lobby', gameData: null, results: null }); },
+        exitGame() { if (confirm("¿Seguro?")) location.reload(); },
+        toggleSecret() { const o = document.getElementById('secret-overlay'); o.style.display = o.style.display === 'block' ? 'none' : 'block'; },
         showScreen(id) {
+            // hide all screens then show the requested one
             document.querySelectorAll('.container').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = 'flex';
+            const el = document.getElementById(id); if (!el) return; el.style.display = 'flex';
+
+            // desktop adjustments: center app and boost matrix visibility on the start screen
+            try {
+                if (window.innerWidth >= 900) {
+                    document.querySelector('.app-shell').style.alignItems = 'center';
+                    const canvas = document.getElementById('matrixCanvas');
+                    if (canvas) canvas.style.opacity = id === 'screen-start' ? '0.22' : '0.08';
+                } else {
+                    const canvas = document.getElementById('matrixCanvas'); if (canvas) canvas.style.opacity = '0.03';
+                }
+            } catch (e) { /* safe fallback */ }
+
+            // play a subtle intro sound on the start screen to provide audio feedback
+            if (id === 'screen-start') playSound('reveal');
         }
     };
 
-    // ==========================================
-    // EFECTOS VISUALES (Originales preservados)
-    // ==========================================
     function initMatrixRain() {
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const chars = '0123456789ABCDEF';
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-        const drops = Array(Math.floor(columns)).fill(1);
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00f3ff';
-            ctx.font = fontSize + 'px monospace';
+        const c = document.getElementById('matrixCanvas'), ctx = c.getContext('2d');
+        c.width = window.innerWidth; c.height = window.innerHeight;
+        const drops = Array(Math.floor(c.width/14)).fill(1);
+        function d() {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,c.width,c.height); ctx.fillStyle = '#00f3ff'; ctx.font = '14px monospace';
             drops.forEach((y, i) => {
-                const text = chars[Math.floor(Math.random() * chars.length)];
-                ctx.fillText(text, i * fontSize, y * fontSize);
-                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-                drops[i]++;
+                ctx.fillText('0123456789ABCDEF'[Math.floor(Math.random()*16)], i*14, y*14);
+                if (y*14 > c.height && Math.random() > 0.975) drops[i] = 0; drops[i]++;
             });
         }
-        setInterval(draw, 50);
+        setInterval(d, 50);
     }
-
     function launchConfetti() {
         for(let i=0; i<50; i++) {
-            const c = document.createElement('div');
-            c.className = 'confetti';
-            c.style.left = Math.random()*100+'vw';
+            const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random()*100+'vw';
             c.style.backgroundColor = ['#ff003c','#00f3ff','#39ff14','#b400ff'][Math.floor(Math.random()*4)];
-            c.style.animationDuration = (Math.random()*2+2)+'s';
-            document.body.appendChild(c);
-            setTimeout(() => c.remove(), 4000);
+            c.style.animationDuration = (Math.random()*2+2)+'s'; document.body.appendChild(c); setTimeout(() => c.remove(), 4000);
         }
     }
-
-    function playSound(type) {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.connect(g); g.connect(ctx.destination);
-        g.gain.value = 0.05;
-        if(type==='reveal') { osc.frequency.value = 800; osc.start(); osc.stop(ctx.currentTime+0.2); }
-        if(type==='impostor') { osc.frequency.value = 200; osc.start(); osc.stop(ctx.currentTime+0.5); }
-        if(type==='click') { osc.frequency.value = 1000; osc.start(); osc.stop(ctx.currentTime+0.05); }
-        if(type==='success') { osc.frequency.setValueAtTime(500, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime+0.5); osc.start(); osc.stop(ctx.currentTime+0.5); }
-        if(type==='fail') { osc.frequency.setValueAtTime(300, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime+0.5); osc.start(); osc.stop(ctx.currentTime+0.5); }
+    function playSound(t) {
+        const ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain();
+        o.connect(g); g.connect(ac.destination); g.gain.value = 0.05;
+        if(t==='reveal') { o.frequency.value = 800; o.start(); o.stop(ac.currentTime+0.2); }
+        if(t==='impostor') { o.frequency.value = 200; o.start(); o.stop(ac.currentTime+0.5); }
+        if(t==='click') { o.frequency.value = 1000; o.start(); o.stop(ac.currentTime+0.05); }
+        if(t==='success') { o.frequency.setValueAtTime(500, ac.currentTime); o.frequency.exponentialRampToValueAtTime(1000, ac.currentTime+0.5); o.start(); o.stop(ac.currentTime+0.5); }
+        if(t==='fail') { o.frequency.setValueAtTime(300, ac.currentTime); o.frequency.exponentialRampToValueAtTime(100, ac.currentTime+0.5); o.start(); o.stop(ac.currentTime+0.5); }
     }
-
     app.init();
 </script>
 </body>
