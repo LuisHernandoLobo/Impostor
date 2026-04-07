@@ -166,6 +166,45 @@
         }
 
         .player-tag.is-me { border-color: var(--neon-green); color: var(--neon-green); }
+        .player-tag.is-active { border-color: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow); animation: pulse 1s infinite; }
+
+        /* DEBATE & AUDIO */
+        #debate-order-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .debate-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .debate-item.active { border-color: var(--neon-yellow); background: rgba(255, 230, 0, 0.05); }
+        
+        .voice-btn-container { margin: 20px 0; text-align: center; }
+        .btn-record {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: var(--neon-red); border: 4px solid rgba(255,255,255,0.2);
+            color: white; font-size: 1.5rem; cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .btn-record.recording { animation: pulse-red 1s infinite; transform: scale(1.1); background: #ff0000; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 0, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0); } }
+
+        .audio-player { width: 40px; height: 40px; border-radius: 50%; background: var(--neon-blue); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .consensus-section {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 243, 255, 0.05);
+            border-radius: 12px;
+            border: 1px dashed var(--neon-blue);
+        }
 
         /* CARD 3D */
         .card-container { perspective: 1500px; width: 280px; aspect-ratio: 2/3; margin: 20px auto; }
@@ -294,17 +333,31 @@
 <!-- PANTALLA 4: DEBATE -->
 <div class="container" id="screen-debate" style="display:none;">
     <h1>FASE DE<br><span style="color:var(--neon-green)">ANÁLISIS</span></h1>
-    <div class="setup-section" style="text-align: center;">
-        <div class="section-title">Orden de Palabra</div>
+    
+    <div class="setup-section">
+        <div class="section-title" id="debate-status-title">Turnos de Palabra</div>
         <div id="debate-order-list"></div>
     </div>
-    <div class="setup-section" style="background: rgba(57, 255, 20, 0.05); border-color: var(--neon-green);">
-        <p style="font-size: 0.7rem; line-height: 1.5; color: #ccc;">
-            Cada agente debe decir una palabra o frase corta relacionada con su secreto. El impostor debe mimetizarse.
-        </p>
+
+    <div id="recording-zone" style="display:none;">
+        <div class="voice-btn-container">
+            <button class="btn-record" id="btn-record" onclick="app.toggleRecording()">🎙️</button>
+            <p id="record-msg" style="font-size: 0.6rem; color: var(--neon-red); margin-top: 10px; font-weight: bold;">TOCA PARA GRABAR</p>
+        </div>
     </div>
-    <button id="btn-goto-vote" class="btn-main" onclick="app.requestVoting()" style="display:none;">PASAR A VOTACIÓN</button>
-    <div id="waiting-vote-msg" class="status-msg" style="display:none;">ESPERANDO QUE EL HOST INICIE LA VOTACIÓN...</div>
+
+    <div id="consensus-zone" class="consensus-section">
+        <div class="section-title">¿Proceder a Votación?</div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-main" style="margin:0; flex:1;" onclick="app.setConsensus(true)">VOTAR YA</button>
+            <button class="btn-secondary" style="margin:0; flex:1;" onclick="app.setConsensus(false)">NUEVA RONDA</button>
+        </div>
+        <p id="consensus-status" style="font-size: 0.5rem; color: var(--neon-blue); text-align: center; margin-top: 10px;"></p>
+    </div>
+
+    <div id="waiting-turn-msg" class="status-msg">ESPERANDO TU TURNO...</div>
+    
+    <button id="btn-goto-vote-host" class="btn-main" onclick="app.requestVoting()" style="display:none; margin-top: 20px;">FORZAR VOTACIÓN (HOST)</button>
 </div>
 
 <!-- PANTALLA 5: VOTACIÓN -->
@@ -329,6 +382,7 @@
 <!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
 <script>
     // ==========================================
@@ -347,6 +401,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const storage = firebase.storage();
 
     // BASE DE DATOS DE PALABRAS (Mantenemos la tuya original)
     const wordDatabase = [
@@ -371,6 +426,12 @@
         isHost: false,
         players: {},
         gameState: 'lobby',
+        
+        // Propiedades de Audio y Turnos
+        mediaRecorder: null,
+        audioChunks: [],
+        isRecording: false,
+        activeAudio: null,
 
         init() {
             this.playerId = 'p_' + Math.random().toString(36).substr(2, 9);
@@ -443,6 +504,7 @@
                 this.updateLobby();
 
                 if (this.gameState === 'playing') this.startReveal(data.gameData);
+                if (this.gameState === 'debate') this.handleDebate(data.gameData);
                 if (this.gameState === 'voting') this.startVoting(data.gameData);
                 if (this.gameState === 'results') this.showResults(data.results, data.gameData);
             });
@@ -476,6 +538,9 @@
             const playerIds = Object.keys(this.players);
             const impostorId = playerIds[Math.floor(Math.random() * playerIds.length)];
 
+            // Crear orden de turnos aleatorio
+            const turnOrder = [...playerIds].sort(() => Math.random() - 0.5);
+
             db.ref('rooms/' + this.roomId).update({
                 status: 'playing',
                 gameData: {
@@ -483,6 +548,9 @@
                     impostorWord: pair.impostor,
                     impostorId: impostorId,
                     category: pair.categoria,
+                    turnOrder: turnOrder,
+                    activeTurnIndex: 0,
+                    roundNum: 1,
                     startTime: firebase.database.ServerValue.TIMESTAMP
                 }
             });
@@ -518,20 +586,184 @@
                 playSound('reveal');
             }
 
-            // Auto-transición a debate tras 15 seg o control de host
+            // Auto-transición a debate tras 10 seg o control de host
             if (this.isHost) {
                 setTimeout(() => {
-                    this.showDebate();
+                    db.ref('rooms/' + this.roomId).update({ status: 'debate' });
                 }, 10000);
             }
         },
 
-        showDebate() {
+        handleDebate(gameData) {
             this.showScreen('screen-debate');
-            if (this.isHost) {
-                document.getElementById('btn-goto-vote').style.display = 'block';
+            const turnOrder = gameData.turnOrder || [];
+            const activeIdx = gameData.activeTurnIndex || 0;
+            const activePlayerId = turnOrder[activeIdx];
+            const isMyTurn = activePlayerId === this.playerId;
+
+            // Actualizar lista de turnos
+            const list = document.getElementById('debate-order-list');
+            list.innerHTML = '';
+            
+            turnOrder.forEach((id, idx) => {
+                const p = this.players[id];
+                if (!p) return;
+                
+                const div = document.createElement('div');
+                div.className = 'debate-item' + (idx === activeIdx ? ' active' : '');
+                
+                const audioUrl = gameData.voiceMessages ? gameData.voiceMessages[id] : null;
+                const audioIcon = audioUrl ? `<div class="audio-player" onclick="app.playVoiceMessage('${audioUrl}')">▶️</div>` : '<span style="font-size:0.5rem; color:#444">ESPERANDO...</span>';
+                
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:8px; height:8px; border-radius:50%; background:${idx === activeIdx ? 'var(--neon-yellow)' : (audioUrl ? 'var(--neon-green)' : '#222')}"></div>
+                        <span style="font-size:0.8rem; ${idx === activeIdx ? 'color:var(--neon-yellow)' : ''}">${p.name} ${id === this.playerId ? '(TÚ)' : ''}</span>
+                    </div>
+                    ${audioIcon}
+                `;
+                list.appendChild(div);
+            });
+
+            // Control de visibilidad de zona de grabación
+            const recordingZone = document.getElementById('recording-zone');
+            const waitingMsg = document.getElementById('waiting-turn-msg');
+            const consensusZone = document.getElementById('consensus-zone');
+
+            if (activeIdx < turnOrder.length) {
+                // Estamos en ronda de palabras
+                consensusZone.style.display = 'none';
+                if (isMyTurn) {
+                    recordingZone.style.display = 'block';
+                    waitingMsg.style.display = 'none';
+                    document.getElementById('debate-status-title').innerText = "ES TU TURNO DE HABLAR";
+                } else {
+                    recordingZone.style.display = 'none';
+                    waitingMsg.style.display = 'block';
+                    waitingMsg.innerText = `ESPERANDO A ${this.players[activePlayerId]?.name || 'AGENTE'}...`;
+                    document.getElementById('debate-status-title').innerText = "RONDA DE PALABRAS";
+                }
             } else {
-                document.getElementById('waiting-vote-msg').style.display = 'block';
+                // Ronda terminada, fase de consenso
+                recordingZone.style.display = 'none';
+                waitingMsg.style.display = 'none';
+                consensusZone.style.display = 'flex';
+                document.getElementById('debate-status-title').innerText = "CONSENSO GRUPAL";
+                this.updateConsensusUI();
+            }
+
+            if (this.isHost) {
+                document.getElementById('btn-goto-vote-host').style.display = 'block';
+            }
+        },
+
+        async toggleRecording() {
+            if (!this.isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.audioChunks = [];
+
+                    this.mediaRecorder.ondataavailable = e => this.audioChunks.push(e.data);
+                    this.mediaRecorder.onstop = () => this.processAudio();
+
+                    this.mediaRecorder.start();
+                    this.isRecording = true;
+                    document.getElementById('btn-record').classList.add('recording');
+                    document.getElementById('record-msg').innerText = "DETENER (MÁX 15S)";
+                    
+                    // Auto-stop a los 15 segundos
+                    setTimeout(() => { if(this.isRecording) this.toggleRecording(); }, 15000);
+                } catch (err) {
+                    alert("Error al acceder al micrófono: " + err);
+                }
+            } else {
+                this.mediaRecorder.stop();
+                this.isRecording = false;
+                document.getElementById('btn-record').classList.remove('recording');
+                document.getElementById('record-msg').innerText = "SUBIENDO...";
+                this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            }
+        },
+
+        async processAudio() {
+            const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+            const path = `rooms/${this.roomId}/audios/${this.playerId}_round.webm`;
+            const ref = storage.ref().child(path);
+            
+            // Deshabilitar botón durante la subida
+            const btn = document.getElementById('btn-record');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = "0.5";
+            }
+
+            try {
+                const snapshot = await ref.put(audioBlob);
+                const url = await snapshot.ref.getDownloadURL();
+                
+                // Guardar URL en DB y pasar turno
+                const roomRef = db.ref('rooms/' + this.roomId);
+                await roomRef.child('gameData/voiceMessages/' + this.playerId).set(url);
+                
+                const snap = await roomRef.child('gameData/activeTurnIndex').once('value');
+                await roomRef.child('gameData/activeTurnIndex').set(snap.val() + 1);
+                
+                document.getElementById('record-msg').innerText = "¡ENVIADO!";
+                playSound('click');
+            } catch (err) {
+                console.error(err);
+                alert("Error al subir audio");
+                document.getElementById('record-msg').innerText = "ERROR - REINTENTA";
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                }
+            }
+        },
+
+        playVoiceMessage(url) {
+            if (this.activeAudio) this.activeAudio.pause();
+            this.activeAudio = new Audio(url);
+            this.activeAudio.play();
+        },
+
+        setConsensus(ready) {
+            db.ref('rooms/' + this.roomId + '/players/' + this.playerId).update({ readyToVote: ready });
+            playSound('click');
+        },
+
+        updateConsensusUI() {
+            const total = Object.keys(this.players).length;
+            let readyCount = 0;
+            let retryCount = 0;
+            
+            for (let id in this.players) {
+                if (this.players[id].readyToVote === true) readyCount++;
+                if (this.players[id].readyToVote === false) retryCount++;
+            }
+
+            document.getElementById('consensus-status').innerText = `VOTOS: ${readyCount} PARA VOTAR, ${retryCount} OTRA RONDA (DE ${total})`;
+
+            if (this.isHost) {
+                if (readyCount === total) {
+                    this.requestVoting();
+                } else if (retryCount > 0 && (readyCount + retryCount) === total) {
+                    // Si alguien quiere otra ronda y todos han decidido, reiniciamos turnos
+                    this.resetTurns();
+                }
+            }
+        },
+
+        resetTurns() {
+            db.ref('rooms/' + this.roomId + '/gameData').update({
+                activeTurnIndex: 0,
+                voiceMessages: null // Opcional: limpiar mensajes previos
+            });
+            // Resetear estados de los jugadores
+            for (let id in this.players) {
+                db.ref('rooms/' + this.roomId + '/players/' + id).update({ readyToVote: null });
             }
         },
 
