@@ -1,132 +1,228 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Impostor Lobito ULTRA DIOS</title>
-<style>
-body,html{margin:0;padding:0;font-family:sans-serif;background:#000;color:#fff;overflow:hidden}
-.container{display:none;justify-content:center;align-items:center;height:100vh;flex-direction:column}
-#bgImage{position:fixed;width:100%;height:100%;background-size:cover;background-position:center;z-index:-1;transition:all .5s}
-.card-container{width:min(90vw,320px);aspect-ratio:2/3}
-.card{width:100%;height:100%;background:#111;border-radius:12px;display:flex;align-items:center;justify-content:center}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lobito Impostor Online</title>
+  <style>
+    :root {
+      --primary: #ff4757;
+      --secondary: #2ed573;
+      --accent: #ffa502;
+      --dark: #1e272e;
+      --glass: rgba(20, 20, 20, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --text: #ffffff;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
 
-/* emociones */
-body.calm #bgImage{filter:brightness(.8)}
-body.mystery #bgImage{filter:brightness(.6) hue-rotate(40deg)}
-body.tension #bgImage{filter:brightness(.5)}
-body.chaos #bgImage{filter:brightness(.4) contrast(1.5)}
-body.climax #bgImage{filter:brightness(.3)}
-body.epic #bgImage{filter:brightness(.9)}
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    
+    body { 
+      color: var(--text); 
+      min-height: 100vh; 
+      overflow-x: hidden; 
+      background-color: #111;
+    }
 
-.shockwave{position:fixed;top:50%;left:50%;width:10px;height:10px;background:red;border-radius:50%;transform:translate(-50%,-50%);animation:shock .8s}
-@keyframes shock{to{width:200vw;height:200vw;opacity:0}}
+    /* SISTEMA DE FONDOS */
+    .bg-layer {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -2;
+      transition: opacity 0.6s ease-in-out;
+    }
+    .bg-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(20,10,30,0.4) 100%);
+      z-index: -1;
+    }
+    
+    .bg-lobby { background-image: url('fondo1.png'); }
+    .bg-analysis { background-image: url('fondo2.png'); }
+    .bg-voting { background-image: url('fondo3.png'); }
 
-#ai-narrator{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#000a;padding:10px;border-radius:20px;opacity:0;transition:.5s}
-</style>
+    /* LAYOUT & COMPONENTES */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .screen {
+      background: var(--glass);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      text-align: center;
+      display: none; /* Oculto por defecto */
+      animation: fadeIn 0.4s ease;
+    }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .logo { width: 100px; margin-bottom: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    h1 { font-size: 1.8rem; margin-bottom: 5px; letter-spacing: 1px; text-transform: uppercase; }
+    h2 { font-size: 1.4rem; margin-bottom: 15px; color: var(--accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; }
+    .subtitle { font-size: 0.85rem; opacity: 0.7; margin-bottom: 20px; letter-spacing: 2px; }
+    
+    .btn {
+      display: inline-block; padding: 10px 18px; margin: 6px 4px;
+      border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; font-size: 0.9rem; color: white;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    }
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+    .btn-primary { background: var(--primary); }
+    .btn-success { background: var(--secondary); color: #0f1510; }
+    .btn-accent { background: var(--accent); color: #1a1000; }
+    .btn-danger { background: #ff4757; }
+    .btn-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 12px 0; }
+
+    .input-field {
+      width: 100%; padding: 12px; margin: 10px 0;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+      border-radius: 8px; color: white; font-size: 1rem; text-align: center;
+    }
+    .input-field::placeholder { color: rgba(255,255,255,0.4); }
+
+    .status-box {
+      margin: 15px 0; padding: 12px; border-radius: 8px;
+      background: rgba(0,0,0,0.4); border-left: 3px solid var(--accent);
+      font-size: 0.95rem;
+    }
+    .role-reveal { font-size: 2.2rem; font-weight: bold; margin: 15px 0; letter-spacing: 3px; }
+    
+    .footer { font-size: 0.75rem; opacity: 0.5; margin-top: 15px; }
+  </style>
 </head>
 <body>
+  <!-- Capas de fondo -->
+  <div id="bg-layer" class="bg-layer bg-lobby"></div>
+  <div class="bg-overlay"></div>
 
-<div id="bgImage"></div>
+  <div class="container">
+    
+    <!-- 1. IDENTIFICACIÓN / LOBBY -->
+    <section id="screen-id" class="screen active">
+      <img src="./logo-lhlj.png" alt="Logo" class="logo">
+      <h1>Lobito Impostor Online</h1>
+      <p class="subtitle">IMPOSTOR PROTOCOL</p>
+      
+      <input type="text" class="input-field" id="secret" placeholder="--- Secreto ---">
+      <input type="text" class="input-field" placeholder="TU ROL / TU PALABRA">
+      
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="goTo('screen-waiting')">Identificación</button>
+        <button class="btn btn-success" onclick="goTo('screen-waiting')">Crear Sala</button>
+        <button class="btn btn-accent" onclick="goTo('screen-waiting')">Unirse</button>
+        <button class="btn btn-primary" onclick="goTo('screen-waiting')">Conectar</button>
+      </div>
+      <p class="footer">BY LUIS HERNANDO LOBO JÁCOME</p>
+    </section>
 
-<div id="ai-narrator"></div>
+    <!-- 2. SALA DE ESPERA -->
+    <section id="screen-waiting" class="screen">
+      <h2>🏠 SALA DE ESPERA</h2>
+      <input type="text" class="input-field" value="CÓDIGO: ----" readonly>
+      <p style="margin: 8px 0;">Agentes en frecuencia: <span style="color: var(--secondary); font-weight: bold;">( 0 )</span></p>
+      
+      <div class="btn-group">
+        <button class="btn btn-primary">🌐 Todas</button>
+        <button class="btn btn-success">🟢 Recluta</button>
+        <button class="btn btn-accent">🟡 Agente</button>
+        <button class="btn btn-danger">🔴 Élite</button>
+      </div>
+      <p style="margin: 10px 0 5px;">¿Impostor tiene guía?</p>
+      <div class="btn-group">
+        <button class="btn btn-primary">📋 Prompt</button>
+        <button class="btn btn-success">📥 Cargar</button>
+        <button class="btn btn-danger">🧹 Limpiar</button>
+      </div>
 
-<div id="screen-start" class="container" style="display:flex">
-<h1>Impostor Lobito</h1>
-<button onclick="app.start()">Iniciar</button>
-</div>
+      <button class="btn btn-success" style="width: 100%; margin-top: 15px; padding: 14px;">▶ INICIAR PROTOCOLO</button>
+      <div class="status-box">⏳ Esperando que el Host inicie...</div>
+      <button class="btn btn-danger" onclick="goTo('screen-id')">🚪 Abandonar Sala</button>
+    </section>
 
-<div id="screen-game" class="container">
-<div class="card-container">
-<div class="card" id="card">JUEGO</div>
-</div>
-</div>
+    <!-- 3. IDENTIDAD -->
+    <section id="screen-identity" class="screen">
+      <h2>🕵️ TU IDENTIDAD</h2>
+      <div class="role-reveal">---</div>
+      <div class="status-box" style="font-size: 1.2rem;">---</div>
+      <p style="margin: 15px 0; color: var(--secondary);">✅ Agentes Listos</p>
+      <button class="btn btn-primary" style="width: 80%;">Iniciar Debate</button>
+      <div class="status-box">⏳ Esperando autorización...</div>
+    </section>
 
-<script>
-const app={
-phaseBackgrounds:{
-start:'fondo1.png',
-game:'fondo2.png'
-},
-gameState:'lobby',
-players:{},
-gameData:{textWords:{}},
+    <!-- 4. ANÁLISIS -->
+    <section id="screen-analysis" class="screen">
+      <h2>🔍 PROTOCOLO DE ANÁLISIS</h2>
+      <p>Turnos: <span style="color: var(--secondary); font-weight: bold;">OK</span></p>
+      <p style="margin: 15px 0;">¿Pasar a votación?</p>
+      <div class="btn-group">
+        <button class="btn btn-success" style="flex: 1;">✅ SÍ</button>
+        <button class="btn btn-danger" style="flex: 1;">❌ NO</button>
+      </div>
+      <div class="status-box">⏳ Esperando...</div>
+    </section>
 
-audioCtx:null,
-initAudio(){
-if(!this.audioCtx)this.audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-},
-playTone(f=440,d=.2,t='sine',v=.1){
-this.initAudio();
-const o=this.audioCtx.createOscillator();
-const g=this.audioCtx.createGain();
-o.type=t;o.frequency.value=f;g.gain.value=v;
-o.connect(g);g.connect(this.audioCtx.destination);
-o.start();o.stop(this.audioCtx.currentTime+d);
-},
+    <!-- 5. VOTACIÓN -->
+    <section id="screen-voting" class="screen">
+      <h2>🗳️ PROTOCOLO DE VOTACIÓN</h2>
+      <p style="margin: 15px 0;">Selecciona al sospechoso</p>
+      <div class="status-box">Votos recibidos: <span style="color: var(--accent); font-weight: bold;">0 / 0</span></div>
+      <div class="role-reveal" style="font-size: 1.5rem; margin: 10px 0;">---</div>
+      <div class="btn-group">
+        <button class="btn btn-accent" onclick="goTo('screen-id')">🔄 Nuevo Juego</button>
+        <button class="btn btn-danger" onclick="goTo('screen-id')">🚪 Salir</button>
+      </div>
+    </section>
 
-playEmotionFX(e){
-if(e==='tension')this.playTone(300,.1,'sawtooth');
-if(e==='chaos')this.playTone(200,.1,'square');
-if(e==='climax')this.playTone(600,.2,'square');
-if(e==='epic')this.playTone(800,.3,'triangle');
-},
+  </div>
 
-getGameEmotion(){
-if(this.gameState==='lobby')return'calm';
-if(this.gameState==='game')return'tension';
-return'neutral';
-},
+  <script>
+    // Mapeo de pantallas a fondos
+    const screenToBg = {
+      'screen-id': 'bg-lobby',
+      'screen-waiting': 'bg-lobby',
+      'screen-identity': 'bg-analysis',
+      'screen-analysis': 'bg-analysis',
+      'screen-voting': 'bg-voting'
+    };
 
-setPhaseBackground(p){
-document.getElementById('bgImage').style.backgroundImage=`url(${this.phaseBackgrounds[p]})`;
-const e=this.getGameEmotion();
-document.body.className=p+' '+e;
-this.playEmotionFX(e);
-if(e==='climax')this.triggerShockwave();
-this.runNarrator();
-},
+    // Función para cambiar de pantalla y fondo
+    function goTo(screenId) {
+      // Ocultar todas
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      // Mostrar la seleccionada
+      document.getElementById(screenId).classList.add('active');
+      
+      // Cambiar fondo
+      const bgLayer = document.getElementById('bg-layer');
+      bgLayer.style.opacity = '0';
+      setTimeout(() => {
+        bgLayer.className = 'bg-layer ' + screenToBg[screenId];
+        bgLayer.style.opacity = '1';
+      }, 300);
+    }
 
-triggerShockwave(){
-const d=document.createElement('div');
-d.className='shockwave';
-document.body.appendChild(d);
-setTimeout(()=>d.remove(),800);
-},
-
-speakAI(t){
-const el=document.getElementById('ai-narrator');
-el.innerText=t;
-el.style.opacity=1;
-setTimeout(()=>el.style.opacity=0,3000);
-},
-
-runNarrator(){
-const e=this.getGameEmotion();
-if(e==='tension')this.speakAI('Algo no cuadra...');
-},
-
-detectSuspiciousPlayerAdvanced(){
-let max=null,scoreMax=-1;
-for(let id in this.players){
-let s=Math.random()*5;
-if(s>scoreMax){scoreMax=s;max=id;}
-}
-return max;
-},
-
-start(){
-this.gameState='game';
-this.showScreen('screen-game');
-},
-
-showScreen(id){
-document.querySelectorAll('.container').forEach(c=>c.style.display='none');
-document.getElementById(id).style.display='flex';
-this.setPhaseBackground(id==='screen-start'?'start':'game');
-}
-};
-</script>
-
+    // Ejemplo de integración: descomenta y adapta a tu lógica de juego
+    // document.getElementById('startBtn').addEventListener('click', () => goTo('screen-analysis'));
+  </script>
 </body>
 </html>
