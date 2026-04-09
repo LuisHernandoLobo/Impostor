@@ -10,10 +10,28 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// --- CONFIGURACIÓN IA (GEMINI) ---
+// Obtén tu API KEY gratuita en: https://aistudio.google.com/
+const GEMINI_API_KEY = "AIzaSyDisJ37ZrANUUeyp-A8IMK6b2aTaw4OMaM"; 
+
 const app = {
     roomId: null, playerId: null, nickname: null, isHost: false, players: {}, gameData: null, 
     words: [], joined: false,
     backgrounds: ['./assets/fondo1.webp', './assets/fondo2.webp', './assets/fondo3.webp', './assets/Ondas doradas de luz resplandeciente.webp'],
+
+    async askGemini(prompt) {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY.includes("TU_API_KEY")) return null;
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text.trim();
+        } catch (e) { console.error("IA Error:", e); return null; }
+    },
 
     init() { 
         this.handlePreloader();
