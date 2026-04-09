@@ -276,10 +276,16 @@ const app = {
             if (this.joined && !playersInRoom[this.playerId]) { location.reload(); return; }
             this.players = playersInRoom; this.gameState = data.status; this.gameData = data.gameData;
             this.isHost = (data.hostId === this.playerId);
+            const hostName = playersInRoom[data.hostId]?.name || "HOST";
+            const hNL = document.getElementById('host-nickname-lobby'); if(hNL) hNL.innerText = hostName;
+            const hNR = document.getElementById('host-nickname-results'); if(hNR) hNR.innerText = hostName.toUpperCase();
+
             if (this.gameData) {
                 const isI = this.playerId === this.gameData.impostorId;
                 document.getElementById('reminder-role').innerText = isI ? "IMPOSTOR" : "AGENTE";
-                document.getElementById('reminder-category').innerText = this.gameData.category || "---";
+                // Aseguramos que se use category o el nombre del campo en español como fallback
+                const cat = this.gameData.category || this.gameData.categoria || "General";
+                document.getElementById('reminder-category').innerText = cat.toUpperCase();
                 document.getElementById('reminder-word').innerText = isI ? this.gameData.impostorWord : this.gameData.word;
             }
             
