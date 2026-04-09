@@ -84,33 +84,33 @@
 
     <!-- PANTALLA DE INSTRUCCIONES -->
     <div class="container" id="screen-instructions" style="display:none; max-height: 85vh; overflow-y: auto; padding-top: 40px; justify-content: flex-start;">
-        <h1 style="font-size: 1.4rem;">MANUAL DE<br><span style="color:var(--accent-blue)">OPERACIONES</span></h1>
+        <h1 style="font-size: 1.8rem;">MANUAL DE<br><span style="color:var(--accent-blue)">OPERACIONES</span></h1>
         
-        <div class="setup-section" style="text-align: left; font-size: 0.75rem; line-height: 1.4; background: rgba(0,0,0,0.4);">
-            <div class="section-title" style="color: var(--accent-gold); font-size: 0.65rem;">I. OBJETIVO ESTRATÉGICO</div>
-            <p><strong>Agentes:</strong> Detectar al infiltrado analizando sus palabras y comportamiento. ¡No reveles la palabra clave!</p>
-            <p><strong>Impostor:</strong> Mimetizarse. Debes deducir la palabra de los agentes para ganar adivinando o pasando desapercibido.</p>
+        <div class="setup-section" style="text-align: left; font-size: 1.0rem; line-height: 1.6; background: rgba(0,0,0,0.5); padding: 20px;">
+            <div class="section-title" style="color: var(--accent-gold); font-size: 0.85rem; margin-bottom: 12px;">I. OBJETIVO ESTRATÉGICO</div>
+            <p style="margin-bottom: 15px;"><strong>Agentes:</strong> Detectar al infiltrado analizando sus palabras. ¡No reveles la palabra clave!</p>
+            <p style="margin-bottom: 15px;"><strong>Impostor:</strong> Mimetizarse. Debes deducir la palabra de los agentes para ganar adivinando.</p>
             
-            <div class="section-title" style="color: var(--accent-gold); font-size: 0.65rem; margin-top: 15px;">II. FASES DEL PROTOCOLO</div>
-            <p><strong>1. Revelación:</strong> Toca tu tarjeta. Memoriza tu rol y palabra. ¡Es confidencial!</p>
-            <p><strong>2. Análisis (Debate):</strong> Por turnos, cada uno dice una palabra relacionada. El impostor debe improvisar para no ser detectado.</p>
-            <p><strong>3. Votación:</strong> Tras el debate, los agentes deciden si votar. Si el impostor recibe más votos, ¡misión cumplida!</p>
+            <div class="section-title" style="color: var(--accent-gold); font-size: 0.85rem; margin-top: 25px; margin-bottom: 12px;">II. FASES DEL PROTOCOLO</div>
+            <p style="margin-bottom: 15px;"><strong>1. Revelación:</strong> Toca tu tarjeta. Memoriza tu rol y palabra. ¡Es confidencial!</p>
+            <p style="margin-bottom: 15px;"><strong>2. Análisis (Debate):</strong> Por turnos, cada uno dice una palabra. El impostor improvisa.</p>
+            <p style="margin-bottom: 15px;"><strong>3. Votación:</strong> Tras el debate, los agentes deciden si votar. ¡Expon al traidor!</p>
 
-            <div class="section-title" style="color: var(--accent-gold); font-size: 0.65rem; margin-top: 15px;">III. COMANDOS DE CAMPO</div>
-            <p>👁️ <strong>Botón Secreto:</strong> Arriba a la derecha. Úsalo para recordar tu palabra y categoría en cualquier momento.</p>
-            <p>🤖 <strong>Agentes Virtuales:</strong> El Host puede añadir bots en el Lobby para completar la escuadra.</p>
-            <p>🎯 <strong>Adivinar:</strong> El Impostor puede intentar una victoria rápida adivinando la palabra clave durante el debate.</p>
+            <div class="section-title" style="color: var(--accent-gold); font-size: 0.85rem; margin-top: 25px; margin-bottom: 12px;">III. COMANDOS DE CAMPO</div>
+            <p style="margin-bottom: 15px;">👁️ <strong>Botón Secreto:</strong> Úsalo para recordar tu palabra en cualquier momento.</p>
+            <p style="margin-bottom: 15px;">🤖 <strong>Agentes Virtuales:</strong> Añade bots en el Lobby para completar la escuadra.</p>
+            <p style="margin-bottom: 15px;">🎯 <strong>Adivinar:</strong> El Impostor puede intentar ganar adivinando la clave.</p>
         </div>
 
-        <div class="setup-section" style="margin-top: 15px; border-color: var(--accent-red); background: rgba(255,0,0,0.05);">
-            <div class="section-title" style="color: var(--accent-red); font-size: 0.65rem;">IV. CRÉDITOS DE DESARROLLO</div>
-            <p style="font-size: 0.6rem; opacity: 0.7;">Diseño de Interfaz: Cyber-UI v2.4<br>Motor: Firebase Realtime Logic<br>Audio: Oscillator Synth Engine</p>
-            <p style="font-size: 0.8rem; font-weight: 900; color: var(--accent-green); margin-top: 10px; letter-spacing: 1px;">PROYECTO: LHLJ IMPOSTOR</p>
-            <p style="font-size: 0.6rem; opacity: 0.5;">Luis Hernando Lobo Jácome © 2026</p>
+        <div class="setup-section" style="margin-top: 20px; border-color: var(--accent-red); background: rgba(255,0,0,0.05); padding: 20px;">
+            <div class="section-title" style="color: var(--accent-red); font-size: 0.85rem;">IV. CRÉDITOS</div>
+            <p style="font-size: 0.8rem; opacity: 0.8;">Diseño de Interfaz: Cyber-UI v2.4<br>Motor: Firebase Realtime Logic</p>
+            <p style="font-size: 1.1rem; font-weight: 900; color: var(--accent-green); margin-top: 15px; letter-spacing: 1px;">PROYECTO: LHLJ IMPOSTOR</p>
+            <p style="font-size: 0.8rem; opacity: 0.6;">Luis Hernando Lobo Jácome © 2026</p>
         </div>
 
-        <button class="btn-main" onclick="app.showScreen('screen-start')" style="margin-top: 10px; min-height: 45px;">VOLVER AL INICIO</button>
-        <div style="height: 40px;"></div>
+        <button class="btn-main" onclick="app.showScreen('screen-start')" style="margin-top: 20px; min-height: 55px; font-size: 1rem;">VOLVER AL INICIO</button>
+        <div style="height: 60px;"></div>
     </div>
 
     <div class="container" id="screen-lobby" style="display:none;">
