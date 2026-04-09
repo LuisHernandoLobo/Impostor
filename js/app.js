@@ -219,10 +219,17 @@ const app = {
         this.nickname = document.getElementById('input-nickname').value.trim();
         this.roomId = document.getElementById('input-room-code').value.trim().toUpperCase();
         if (!this.nickname || !this.roomId) return alert("Faltan datos");
-        this.cleanupEmptyRooms();
-        this.showScreen('screen-lobby');
+        
         db.ref('rooms/' + this.roomId).once('value', s => {
-            if (!s.exists()) { alert("No existe"); this.showScreen('screen-start'); return; }
+            if (!s.exists()) { alert("La sala no existe"); return; }
+            const roomData = s.val();
+            if (!roomData.players || Object.keys(roomData.players).length === 0) {
+                db.ref('rooms/' + this.roomId).remove();
+                alert("La sala estaba vacía y ha sido eliminada.");
+                return;
+            }
+            this.cleanupEmptyRooms();
+            this.showScreen('screen-lobby');
             this.joinRoomProcess();
         });
     },
