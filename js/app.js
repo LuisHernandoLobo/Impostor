@@ -272,14 +272,34 @@ const app = {
             const snap = await db.ref('rooms/' + roomId + '/players').once('value');
             if (!snap.exists()) {
                 await db.ref('rooms/' + roomId).remove();
+            } else {
+                // Si solo quedan bots, también eliminar la sala
+                const players = snap.val();
+                const humanExists = Object.values(players).some(p => !p.isBot);
+                if (!humanExists) await db.ref('rooms/' + roomId).remove();
             }
         } catch(e) {}
     },
 
     listenToRoom() {
         db.ref('rooms/' + this.roomId).on('value', s => {
-            const data = s.val(); if (!data) return;
+            const data = s.val(); 
+            if (!data) {
+                if (this.joined) {
+                    alert("La sala ha sido cerrada.");
+                    location.reload();
+                }
+                return;
+            }
             const playersInRoom = data.players || {};
+            
+            // Auto-limpieza si la sala se queda sola con bots
+            const humanIds = Object.keys(playersInRoom).filter(id => !playersInRoom[id].isBot);
+            if (humanIds.length === 0 && this.isHost) {
+                db.ref('rooms/' + this.roomId).remove();
+                return;
+            }
+
             if (this.joined && !playersInRoom[this.playerId]) { location.reload(); return; }
             this.players = playersInRoom; this.gameState = data.status; this.gameData = data.gameData;
             this.isHost = (data.hostId === this.playerId);
@@ -290,21 +310,19 @@ const app = {
             if (this.gameData) {
                 const isI = this.playerId === this.gameData.impostorId;
                 document.getElementById('reminder-role').innerText = isI ? "IMPOSTOR" : "AGENTE";
-                // Aseguramos que se use category o el nombre del campo en español como fallback
                 const cat = this.gameData.category || this.gameData.categoria || "General";
                 document.getElementById('reminder-category').innerText = cat.toUpperCase();
                 document.getElementById('reminder-word').innerText = isI ? this.gameData.impostorWord : this.gameData.word;
             }
             
             if (this.gameState === 'playing') {
-                const onlinePlayers = Object.values(playersInRoom).filter(p => p && p.online === true);
-                if (onlinePlayers.length > 0 && onlinePlayers.every(p => p.revealed)) {
-                    const latestReveal = Math.max(...onlinePlayers.map(p => p.revealedAt || 0));
-                    if (Date.now() - latestReveal <= 20000 && !this._autoDebateTimer) {
+                const activePlayers = Object.values(playersInRoom).filter(p => p && p.online === true);
+                if (activePlayers.length > 0 && activePlayers.every(p => p.revealed)) {
+                    if (this.isHost && !this._autoDebateTimer) {
                         this._autoDebateTimer = setTimeout(() => {
-                            if (this.isHost && this.gameState === 'playing') db.ref('rooms/' + this.roomId).update({ status: 'debate' });
+                            if (this.gameState === 'playing') db.ref('rooms/' + this.roomId).update({ status: 'debate' });
                             this._autoDebateTimer = null;
-                        }, 5000);
+                        }, 3000);
                     }
                 }
             } else {
@@ -359,7 +377,7 @@ const app = {
         const names = ["Ricardo", "Elena", "Javier", "Sofía", "Marcos", "Valentina", "Andrés", "Lucía", "Roberto", "Isabel"];
         const botId = 'bot_' + Math.random().toString(36).substr(2, 5);
         const name = names[Math.floor(Math.random()*names.length)] + " 🤖";
-        db.ref('rooms/' + this.roomId + '/players/' + botId).set({ name, online: true, score: 0, isBot: true, joinedAt: Date.now() });
+        db.ref('rooms/' + this.roomId + '/players/' + botId).set({ name, online: true, score: 0, isBot: true, joinedAt: Date.now(), revealed: false });
         playSound('reveal');
     },
 
@@ -370,27 +388,45 @@ const app = {
 
         bots.forEach(bid => {
             const p = this.players[bid];
-            // 1. Revelar carta
+            // 1. Revelar carta (Más rápido)
             if (this.gameState === 'playing' && !p.revealed) {
                 if (!this['_bot_rev_' + bid]) {
                     this['_bot_rev_' + bid] = setTimeout(() => {
                         db.ref('rooms/' + this.roomId + '/players/' + bid).update({ revealed: true, revealedAt: firebase.database.ServerValue.TIMESTAMP });
                         this['_bot_rev_' + bid] = null;
-                    }, 2000 + Math.random()*3000);
+                    }, 1000 + Math.random()*2000);
                 }
             }
-            // 2. Hablar en Debate
+            // 2. Hablar en Debate (Coherencia básica)
             if (this.gameState === 'debate') {
                 const turnOrder = gd.turnOrder || [], activeIdx = gd.activeTurnIndex || 0;
                 if (turnOrder[activeIdx] === bid) {
                     if (!this['_bot_deb_' + bid]) {
                         this['_bot_deb_' + bid] = setTimeout(() => {
-                            const botWords = ["Interesante...", "Tengo mis dudas.", "Mmm, ya veo.", "Lo sospechaba.", "Prosiga.", "Anotado.", "Entendido.", "...", "Analizando datos."];
-                            const word = botWords[Math.floor(Math.random()*botWords.length)];
+                            const isImp = bid === gd.impostorId;
+                            const secret = isImp ? gd.impostorWord : gd.word;
+                            let word = "";
+                            
+                            if (secret.includes("???")) {
+                                word = ["No estoy seguro...", "Es difícil.", "Interesante.", "Mmm...", "Analizando."][Math.floor(Math.random()*5)];
+                            } else {
+                                // Generar una pista coherente: Tomar letras o características vagas
+                                const clues = [
+                                    `Empieza por ${secret[0].toUpperCase()}...`,
+                                    `Tiene ${secret.length} letras.`,
+                                    `Es de categoría ${gd.category}.`,
+                                    `Me recuerda a algo ${secret.length > 5 ? 'grande' : 'pequeño'}.`,
+                                    `Es algo común.`,
+                                    `Lo he visto antes.`,
+                                    `No es tan obvio.`
+                                ];
+                                word = clues[Math.floor(Math.random()*clues.length)];
+                            }
+
                             db.ref('rooms/' + this.roomId + '/gameData/textWords/' + bid).set([word]);
                             db.ref('rooms/' + this.roomId + '/gameData/activeTurnIndex').set(activeIdx + 1);
                             this['_bot_deb_' + bid] = null;
-                        }, 2000 + Math.random()*2000);
+                        }, 1500 + Math.random()*1500);
                     }
                 }
                 // 3. Votar Consenso (SÍ)
@@ -398,15 +434,24 @@ const app = {
                     db.ref('rooms/' + this.roomId + '/players/' + bid).update({ readyToVote: true });
                 }
             }
-            // 4. Votar al sospechoso
-            if (this.gameState === 'voting' && !p.vote && bid !== gd.impostorId) {
+            // 4. Votar al sospechoso (Todos los bots votan)
+            if (this.gameState === 'voting' && !p.vote) {
                 if (!this['_bot_vot_' + bid]) {
                     this['_bot_vot_' + bid] = setTimeout(() => {
                         const candidates = Object.keys(this.players).filter(id => id !== bid);
-                        const target = candidates[Math.floor(Math.random()*candidates.length)];
+                        // El bot impostor vota a alguien aleatorio para no delatarse
+                        // Los bots agentes tienen una ligera probabilidad de votar al impostor real
+                        let target;
+                        const isImp = bid === gd.impostorId;
+                        if (!isImp && Math.random() > 0.6) {
+                            target = gd.impostorId; // El bot sospecha del real
+                        } else {
+                            target = candidates[Math.floor(Math.random()*candidates.length)];
+                        }
+                        
                         db.ref('rooms/' + this.roomId + '/players/' + bid).update({ vote: target });
                         this['_bot_vot_' + bid] = null;
-                    }, 3000 + Math.random()*4000);
+                    }, 2000 + Math.random()*3000);
                 }
             }
         });
