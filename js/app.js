@@ -279,6 +279,7 @@ const app = {
             if (this.gameData) {
                 const isI = this.playerId === this.gameData.impostorId;
                 document.getElementById('reminder-role').innerText = isI ? "IMPOSTOR" : "AGENTE";
+                document.getElementById('reminder-category').innerText = this.gameData.category || "---";
                 document.getElementById('reminder-word').innerText = isI ? this.gameData.impostorWord : this.gameData.word;
             }
             
@@ -322,6 +323,19 @@ const app = {
             div.innerHTML = `${medal} ${p.name} <span class="score-badge">${p.score || 0} pts</span>${k}`; list.appendChild(div);
         });
         document.getElementById('player-count').innerText = ids.length;
+    },
+
+    updateMiniScores(elementId) {
+        const list = document.getElementById(elementId); if (!list) return;
+        list.innerHTML = '';
+        const ids = Object.keys(this.players).sort((a,b) => (this.players[b].score || 0) - (this.players[a].score || 0));
+        ids.forEach(id => {
+            const p = this.players[id];
+            const div = document.createElement('div');
+            div.style.cssText = `background: rgba(255,255,255,0.03); padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; font-weight: 700; color: ${id === this.playerId ? 'var(--accent-green)' : 'rgba(255,255,255,0.6)'}`;
+            div.innerHTML = `${p.name} <span style="color:var(--accent-gold);">${p.score || 0}</span>`;
+            list.appendChild(div);
+        });
     },
 
     kickPlayer(id) { if (confirm(`Expulsar?`)) this.removePlayerAndMaybeRoom(this.roomId, id); },
@@ -388,6 +402,35 @@ const app = {
         } 
     },
 
+    async guessWord() {
+        const input = document.getElementById('input-guess-word'), guess = (input.value || '').trim().toLowerCase();
+        if (!guess) return;
+        const secretWord = (this.gameData?.word || '').toLowerCase();
+        const isCorrect = guess === secretWord;
+
+        if (isCorrect) {
+            const updates = { status: 'results', results: { win: false, impName: this.players[this.gameData.impostorId].name } };
+            for (let id in this.players) {
+                let s = this.players[id].score || 0;
+                if (id === this.gameData.impostorId) s += 20;
+                updates[`players/${id}/score`] = s;
+            }
+            await db.ref('rooms/' + this.roomId).update(updates);
+        } else {
+            const impId = this.gameData.impostorId;
+            let currentScore = this.players[impId].score || 0;
+            await db.ref('rooms/' + this.roomId + '/players/' + impId).update({ score: Math.max(0, currentScore - 20) });
+            const feedback = document.getElementById('guess-feedback');
+            if(feedback) {
+                feedback.innerText = "❌ Palabra incorrecta. -20 pts";
+                setTimeout(() => { if(feedback) feedback.innerText = ""; }, 3000);
+            }
+            input.value = '';
+            playSound('fail');
+        }
+        playSound('click');
+    },
+
     handleDebate(gd) {
         this.showScreen('screen-debate');
         const turnOrder = gd.turnOrder || [], activeIdx = gd.activeTurnIndex || 0, activeId = turnOrder[activeIdx], isMy = activeId === this.playerId;
@@ -401,7 +444,10 @@ const app = {
             div.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><div style="width:12px; height:12px; border-radius:50%; background:${idx === activeIdx ? 'var(--accent-gold)' : (wordsArr.length ? 'var(--accent-green)' : '#333')};"></div><span class="player-name">${p.name}</span></div>${wordsHtml}`;
             list.appendChild(div);
         });
-        const rZ = document.getElementById('recording-zone'), wM = document.getElementById('waiting-turn-msg'), cZ = document.getElementById('consensus-zone');
+        const rZ = document.getElementById('recording-zone'), wM = document.getElementById('waiting-turn-msg'), cZ = document.getElementById('consensus-zone'), iGZ = document.getElementById('impostor-guess-zone');
+        if (iGZ) iGZ.style.display = isImp ? 'block' : 'none';
+        this.updateMiniScores('debate-scores-list');
+
         if (activeIdx < turnOrder.length) { 
             cZ.style.display = 'none'; rZ.style.display = isMy ? 'block' : 'none'; 
             wM.style.display = isMy ? 'none' : 'block'; 
@@ -468,6 +514,7 @@ const app = {
                 list.appendChild(btn); 
             } 
         }
+        this.updateMiniScores('voting-scores-list');
         if (this.isHost && votesCount === agents.length) this.processResults(gd);
     },
 
@@ -646,8 +693,10 @@ function playSound(t) {
     const ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain();
     o.connect(g); g.connect(ac.destination); g.gain.value = 0.05;
     if(t==='reveal') { o.frequency.value = 800; o.start(); o.stop(ac.currentTime+0.2); }
+    if(t==='impostor') { o.type = 'sawtooth'; o.frequency.value = 150; o.start(); o.stop(ac.currentTime+0.4); }
     if(t==='click') { o.frequency.value = 1000; o.start(); o.stop(ac.currentTime+0.05); }
     if(t==='success') { o.frequency.value = 600; o.start(); o.stop(ac.currentTime+0.5); }
+    if(t==='fail') { o.frequency.value = 100; o.start(); o.stop(ac.currentTime+0.3); }
 }
 
 app.init();

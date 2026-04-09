@@ -54,6 +54,8 @@
 <div id="secret-overlay">
     <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1px;">TU ROL</div>
     <div id="reminder-role" style="font-weight: 900; font-size: 1.2rem; margin-bottom: 8px;">---</div>
+    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1px;">CATEGORÍA</div>
+    <div id="reminder-category" style="font-weight: 700; color: var(--accent-gold); font-size: 0.9rem; margin-bottom: 8px;">---</div>
     <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1px;">TU PALABRA</div>
     <div id="reminder-word" style="font-weight: 900; color: var(--accent-blue); font-size: 1.2rem;">---</div>
 </div>
@@ -163,7 +165,24 @@
             </div>
             <p id="consensus-status" style="font-size: 0.65rem; text-align: center; margin-top: 10px; color: var(--accent-blue);"></p>
         </div>
+
+        <div id="impostor-guess-zone" style="display:none; width: 100%; margin-top: 15px;">
+            <div class="setup-section" style="border-color: var(--accent-red); padding: 18px;">
+                <div class="section-title" style="color: var(--accent-red); margin-bottom: 12px;">OPERACIÓN INFILTRADO: ADIVINAR PALABRA</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="input-guess-word" placeholder="Tu infiltración..." style="height: 50px; font-size: 0.9rem;">
+                    <button class="btn-main" onclick="app.guessWord()" style="height: 50px; margin:0; flex: 0 0 90px; background: var(--accent-red); font-size: 0.7rem;">ADIVINAR</button>
+                </div>
+                <p id="guess-feedback" style="font-size: 0.65rem; text-align: center; margin-top: 10px; color: var(--accent-red); font-weight: 700; min-height: 1em;"></p>
+            </div>
+        </div>
+
         <div id="waiting-turn-msg" class="status-msg">Esperando...</div>
+        
+        <div class="setup-section" style="margin-top: auto; padding: 15px; border-color: rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+            <div class="section-title" style="margin-bottom: 8px; font-size: 0.55rem; opacity: 0.6;">Puntajes Actuales</div>
+            <div id="debate-scores-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;"></div>
+        </div>
     </div>
 
     <div class="container" id="screen-voting" style="display:none;">
@@ -172,7 +191,12 @@
             <div class="section-title">Selecciona al sospechoso</div>
             <div id="voting-list"></div>
         </div>
-        <div class="status-msg">Votos recibidos: <span id="votes-received" style="color:var(--accent-red)">0</span> / <span id="votes-total">0</span></div>
+        <div class="status-msg" style="margin-bottom: 20px;">Votos recibidos: <span id="votes-received" style="color:var(--accent-red)">0</span> / <span id="votes-total">0</span></div>
+
+        <div class="setup-section" style="margin-top: auto; padding: 15px; border-color: rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+            <div class="section-title" style="margin-bottom: 8px; font-size: 0.55rem; opacity: 0.6;">Puntajes Actuales</div>
+            <div id="voting-scores-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;"></div>
+        </div>
     </div>
 
     <div class="container" id="screen-results" style="display:none;">
