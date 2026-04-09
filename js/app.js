@@ -431,8 +431,11 @@ const app = {
             await db.ref('rooms/' + this.roomId).update(updates);
         } else {
             const impId = this.gameData.impostorId;
-            let currentScore = this.players[impId].score || 0;
-            await db.ref('rooms/' + this.roomId + '/players/' + impId).update({ score: Math.max(0, currentScore - 20) });
+            // Obtenemos el puntaje más fresco posible de la base de datos
+            db.ref('rooms/' + this.roomId + '/players/' + impId + '/score').transaction(currentScore => {
+                return Math.max(0, (currentScore || 0) - 20);
+            });
+            
             const feedback = document.getElementById('guess-feedback');
             if(feedback) {
                 feedback.innerText = "❌ Palabra incorrecta. -20 pts";
