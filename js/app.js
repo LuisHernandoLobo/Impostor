@@ -422,7 +422,7 @@ const app = {
         const isCorrect = guess === secretWord;
 
         if (isCorrect) {
-            const updates = { status: 'results', results: { win: false, impName: this.players[this.gameData.impostorId].name } };
+            const updates = { status: 'results', results: { win: false, impGuessWin: true, impName: this.players[this.gameData.impostorId].name } };
             for (let id in this.players) {
                 let s = this.players[id].score || 0;
                 if (id === this.gameData.impostorId) s += 20;
@@ -557,6 +557,8 @@ const app = {
         const rankLabels = ['1er', '2do', '3er'];
         const rankClasses = ['rank-1', 'rank-2', 'rank-3'];
         
+        let statusText = res.win ? '🎯 Misión Cumplida' : (res.impGuessWin ? '💀 Golpe del Impostor' : '💀 Misión Fallida');
+        
         let scoresHTML = sortedPlayers.map((p, i) => {
             const rClass = i < 3 ? rankClasses[i] : 'rank-other';
             const label = i < 3 ? rankLabels[i] : `${i+1}to`;
@@ -566,7 +568,7 @@ const app = {
         }).join('');
 
         document.getElementById('result-display').innerHTML = `
-            <div style="font-size:24px; font-weight:900;">${res.win ? '🎯 Misión Cumplida' : '💀 Misión Fallida'}</div>
+            <div style="font-size:24px; font-weight:900;">${statusText}</div>
             <div style="font-size:32px; color: var(--accent-red); margin: 10px 0;">${res.impName}</div>
             <div style="display:flex; gap:20px; justify-content:center; margin-bottom: 20px;">
                 <div>Agentes: <span style="color:var(--accent-blue)">${gd.word}</span></div>
