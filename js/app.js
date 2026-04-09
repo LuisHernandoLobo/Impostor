@@ -318,6 +318,8 @@ const app = {
             if (this.gameState === 'voting') this.startVoting(data.gameData);
             if (this.gameState === 'results') this.showResults(data.results, data.gameData);
             
+            this.manageBots(data.gameData);
+            
             document.getElementById('display-room-code').innerText = this.roomId;
             document.getElementById('host-controls').style.display = this.isHost ? 'block' : 'none';
             document.getElementById('guest-waiting').style.display = !this.isHost ? 'block' : 'none';
@@ -352,6 +354,67 @@ const app = {
     },
 
     kickPlayer(id) { if (confirm(`Expulsar?`)) this.removePlayerAndMaybeRoom(this.roomId, id); },
+    
+    addBots() {
+        const names = ["Agente Alfa 🤖", "Agente Beta 🤖", "Infiltrado X 🤖", "Sombra 🤖", "Protocolo 0 🤖"];
+        const count = 2; // Añadir 2 bots
+        for(let i=0; i<count; i++) {
+            const botId = 'bot_' + Math.random().toString(36).substr(2, 5);
+            const name = names[Math.floor(Math.random()*names.length)] + " " + (i+1);
+            db.ref('rooms/' + this.roomId + '/players/' + botId).set({ name, online: true, score: 0, isBot: true, joinedAt: Date.now() + (i*100) });
+        }
+        playSound('reveal');
+    },
+
+    manageBots(gd) {
+        if (!this.isHost || !gd) return;
+        const bots = Object.keys(this.players).filter(id => this.players[id].isBot);
+        if (bots.length === 0) return;
+
+        bots.forEach(bid => {
+            const p = this.players[bid];
+            // 1. Revelar carta
+            if (this.gameState === 'playing' && !p.revealed) {
+                if (!this['_bot_rev_' + bid]) {
+                    this['_bot_rev_' + bid] = setTimeout(() => {
+                        db.ref('rooms/' + this.roomId + '/players/' + bid).update({ revealed: true, revealedAt: firebase.database.ServerValue.TIMESTAMP });
+                        this['_bot_rev_' + bid] = null;
+                    }, 2000 + Math.random()*3000);
+                }
+            }
+            // 2. Hablar en Debate
+            if (this.gameState === 'debate') {
+                const turnOrder = gd.turnOrder || [], activeIdx = gd.activeTurnIndex || 0;
+                if (turnOrder[activeIdx] === bid) {
+                    if (!this['_bot_deb_' + bid]) {
+                        this['_bot_deb_' + bid] = setTimeout(() => {
+                            const botWords = ["Interesante...", "Tengo mis dudas.", "Mmm, ya veo.", "Lo sospechaba.", "Prosiga.", "Anotado.", "Entendido.", "...", "Analizando datos."];
+                            const word = botWords[Math.floor(Math.random()*botWords.length)];
+                            db.ref('rooms/' + this.roomId + '/gameData/textWords/' + bid).set([word]);
+                            db.ref('rooms/' + this.roomId + '/gameData/activeTurnIndex').set(activeIdx + 1);
+                            this['_bot_deb_' + bid] = null;
+                        }, 2000 + Math.random()*2000);
+                    }
+                }
+                // 3. Votar Consenso (SÍ)
+                if (activeIdx >= turnOrder.length && p.readyToVote === null) {
+                    db.ref('rooms/' + this.roomId + '/players/' + bid).update({ readyToVote: true });
+                }
+            }
+            // 4. Votar al sospechoso
+            if (this.gameState === 'voting' && !p.vote && bid !== gd.impostorId) {
+                if (!this['_bot_vot_' + bid]) {
+                    this['_bot_vot_' + bid] = setTimeout(() => {
+                        const candidates = Object.keys(this.players).filter(id => id !== bid);
+                        const target = candidates[Math.floor(Math.random()*candidates.length)];
+                        db.ref('rooms/' + this.roomId + '/players/' + bid).update({ vote: target });
+                        this['_bot_vot_' + bid] = null;
+                    }, 3000 + Math.random()*4000);
+                }
+            }
+        });
+    },
+
     startDebateManually() { db.ref('rooms/' + this.roomId).update({ status: 'debate' }); },
     
     async startGame() {
