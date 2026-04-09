@@ -430,28 +430,38 @@ const app = {
                     }
                 }
                 // 3. Votar Consenso (SÍ)
-                if (activeIdx >= turnOrder.length && p.readyToVote === null) {
-                    db.ref('rooms/' + this.roomId + '/players/' + bid).update({ readyToVote: true });
+                if (activeIdx >= turnOrder.length && (p.readyToVote === null || p.readyToVote === undefined)) {
+                    if (!this['_bot_con_' + bid]) {
+                        this['_bot_con_' + bid] = setTimeout(() => {
+                            // Verificamos de nuevo antes de ejecutar para evitar duplicados por latencia
+                            if (this.gameState === 'debate') {
+                                db.ref('rooms/' + this.roomId + '/players/' + bid).update({ readyToVote: true });
+                            }
+                            this['_bot_con_' + bid] = null;
+                        }, 500 + Math.random() * 1000);
+                    }
                 }
             }
             // 4. Votar al sospechoso (Todos los bots votan)
-            if (this.gameState === 'voting' && !p.vote) {
+            if (this.gameState === 'voting' && (p.vote === null || p.vote === undefined)) {
                 if (!this['_bot_vot_' + bid]) {
                     this['_bot_vot_' + bid] = setTimeout(() => {
+                        if (this.gameState !== 'voting') {
+                            this['_bot_vot_' + bid] = null;
+                            return;
+                        }
                         const candidates = Object.keys(this.players).filter(id => id !== bid);
-                        // El bot impostor vota a alguien aleatorio para no delatarse
-                        // Los bots agentes tienen una ligera probabilidad de votar al impostor real
                         let target;
                         const isImp = bid === gd.impostorId;
                         if (!isImp && Math.random() > 0.6) {
-                            target = gd.impostorId; // El bot sospecha del real
+                            target = gd.impostorId; 
                         } else {
                             target = candidates[Math.floor(Math.random()*candidates.length)];
                         }
                         
                         db.ref('rooms/' + this.roomId + '/players/' + bid).update({ vote: target });
                         this['_bot_vot_' + bid] = null;
-                    }, 2000 + Math.random()*3000);
+                    }, 1000 + Math.random() * 2000);
                 }
             }
         });
@@ -488,7 +498,11 @@ const app = {
         }
 
         const updates = { status: 'playing', gameData: { word: pair.palabra, impostorWord: impostorWord, impostorId: impId, category: pair.categoria, turnOrder: turnOrder, activeTurnIndex: 0 }, results: null };
-        ids.forEach(id => { updates[`players/${id}/vote`] = null; updates[`players/${id}/readyToVote`] = null; updates[`players/${id}/revealed`] = null; });
+        ids.forEach(id => { 
+            updates[`players/${id}/vote`] = null; 
+            updates[`players/${id}/readyToVote`] = null; 
+            updates[`players/${id}/revealed`] = null; 
+        });
         await db.ref('rooms/' + this.roomId).update(updates);
     },
 
