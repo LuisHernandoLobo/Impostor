@@ -356,13 +356,10 @@ const app = {
     kickPlayer(id) { if (confirm(`Expulsar?`)) this.removePlayerAndMaybeRoom(this.roomId, id); },
     
     addBots() {
-        const names = ["Agente Alfa 🤖", "Agente Beta 🤖", "Infiltrado X 🤖", "Sombra 🤖", "Protocolo 0 🤖"];
-        const count = 2; // Añadir 2 bots
-        for(let i=0; i<count; i++) {
-            const botId = 'bot_' + Math.random().toString(36).substr(2, 5);
-            const name = names[Math.floor(Math.random()*names.length)] + " " + (i+1);
-            db.ref('rooms/' + this.roomId + '/players/' + botId).set({ name, online: true, score: 0, isBot: true, joinedAt: Date.now() + (i*100) });
-        }
+        const names = ["Ricardo", "Elena", "Javier", "Sofía", "Marcos", "Valentina", "Andrés", "Lucía", "Roberto", "Isabel"];
+        const botId = 'bot_' + Math.random().toString(36).substr(2, 5);
+        const name = names[Math.floor(Math.random()*names.length)] + " 🤖";
+        db.ref('rooms/' + this.roomId + '/players/' + botId).set({ name, online: true, score: 0, isBot: true, joinedAt: Date.now() });
         playSound('reveal');
     },
 
