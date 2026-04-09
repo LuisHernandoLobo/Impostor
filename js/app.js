@@ -634,6 +634,9 @@ const app = {
         const el = document.getElementById(id); if (!el) return;
         el.style.display = 'flex'; void el.offsetWidth; el.classList.add('screen-appear');
 
+        // Cambio dinámico de fondo al cambiar de pantalla
+        this.setRandomBackground();
+
         const aurora = document.getElementById('aurora-layer');
         const particles = document.getElementById('particles-layer');
         const grid = document.getElementById('grid-overlay');
